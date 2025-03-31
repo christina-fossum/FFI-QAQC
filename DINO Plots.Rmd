@@ -1,0 +1,210 @@
+---
+title: "DINO_ErrorCheck_2024"
+author: "Christina Fossum"
+date: "2025-01-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Overview
+Created by Christina Fossum, 12/31/2024
+
+This R-Markdown file contains code to perform QA/QC checks on the DINO Pearl Park plots. Each protocol is Analyzed individually.
+
+Protocols:
+1. Surface Fuels - Fine 
+2. Surface Fuels - 1000Hr 
+3. Surface Fuels - Duff_Litter 
+4. Trees - Individuals (metric)
+5. Cover - Points (metric)
+6. Density - Belts (metric)
+7. Density - Quadrats (metric)
+
+* Note: This Document performs QAQC on the FMH plot data collected in 2024. You may adapt this document to perform QAQC on whichever data/plots but make sure to Save As a new document before making changes. 
+
+All Raw FFI export files are located in:
+"C:/Users/cfossum/OneDrive - DOI/ROMO Fire Effects 2024/Data Management/2024 Data/2024 FFI Exports - RAW/FMH FFI export 2024/"
+
+The objective of this document is to produce an error log to easily identify and then correct data in FFI. 
+
+
+# Step 0 - Install / Load packages
+```{r}
+# 1. Install packages (you must do this first before you load them. Once you have installed, you can just load in the future)
+#packages <- c("tidyverse", "dplyr", "writexl", "knitr", "EnvStats")
+#install.packages(packages)
+
+# 1B. gov. computers might block you installing packages. If this happens, run the following line of code and then re-start R, then try step 1 again
+#system2("setx", args = c("R_LIBCURL_SSL_REVOKE_BEST_EFFORT", "TRUE"))
+
+# 3. Load packages (This is the only step you need to run once you have installed)
+library(tidyverse)
+library(dplyr)
+library(writexl)
+library(knitr)
+library(EnvStats)
+
+```
+
+# Create QAQC Error Log
+```{r}
+
+# Create Blank error log
+errors_blank <- data.frame("SavedQuery" = "", "MacroPlot.Name" = "",
+                           "Sample.Event.Date" = "","Error" = "No Error", 
+                           "Comment" = "")
+
+# 3. Create QAQC Function
+qaqc <- function(data, query, query_message, values_check, Comment) {
+  # Identify errors in the data based on the provided check condition
+  errors <- data %>%   
+    # Create new columns: "SavedQuery" with the query parameter and "Error"
+    # which concatenates the query_message and values_data
+    mutate("SavedQuery" = query, 
+           "Error" = paste(query_message, "=", values_data)) %>%
+    # Filter the data to find rows where values_check condition is TRUE
+    # use replace_na to treat NA values as TRUE (which means they pass the check)
+    filter(!(values_check) %>% replace_na(TRUE)) %>%   
+    # Select specific columns to include the errors data frame
+    select("SavedQuery", "MacroPlot.Name", "Sample.Event.Date", "Error", "Comment")
+  # If no errors are identified, add "No Errors" to existing data frame 
+  if (nrow(errors) == 0) {   
+    errors <- errors_blank %>%     
+      mutate(SavedQuery = query) 
+  } else {   
+    # if there are errors, retain the errors data frame as is
+    errors <- errors
+  }
+}
+
+```
+
+
+#################################################################################################################################
+
+## Cover
+
+# Load data & Create Error Log
+1. Number of transects = 2
+2. Transect length = 20
+3. Points per transect = 20
+4. Point = Tape
+5. Each transect should have at least 1 observation for each point
+6. Status should be X for bare, litter, rock, wood; otherwise should be L or D
+8. Outliers flagged for species 
+
+```{r}
+directory_path <- "C:/Users/cfossum/OneDrive - DOI/ROMO Fire Effects 2024/Data Management/2024 Data/2024 FFI Exports - RAW/DINO PearlPark export ALLYEARS/"
+
+list <- list.files(path = directory_path, pattern = "_Cover - Points \\(metric\\)\\.csv$", full.names = TRUE)
+num <- 1:length(list)
+xfunction <- function(x){
+  first_file <- list[x]
+  file <- read.csv(first_file, skip = 3)
+  file2 <- read.csv(first_file)
+  file2 <- file2 %>% select(1:10) %>% filter(Visited == "True")
+  file3 <- left_join(file, file2)
+}
+list <- lapply(num, xfunction)
+cover_df <- do.call(rbind, list)
+
+#########################################################################################
+
+## 1. Number of Transects = 1
+data <- cover_df
+query <- "cover NumTran"
+query_message <- "number of transects"
+values_data <- cover_df$Num..Transects
+values_valid <- 1
+values_check <- values_valid == values_data
+#add to error log
+errors_cover <- qaqc(data, query, query_message, values_check)
+
+# 2. Transect length = 100
+data <- cover_df
+query <- "cover TranLength"
+query_message <- "transect length"
+values_data <- cover_df$Tran..Length
+values_valid <- 100
+values_check <- values_valid == values_data
+#add to error log
+errors_cover <- rbind(errors_cover, qaqc(data, query, query_message, values_check))
+
+# 3. Points per transect = 200
+data <- cover_df
+query <- "cover TranPts"
+query_message <- "points per transect"
+values_data <- cover_df$Num..Pts..Tran.
+values_valid <- 200
+values_check <- values_valid == values_data
+#add to error log
+errors_cover <- rbind(errors_cover, qaqc(data, query, query_message, values_check))
+
+errors_cover <- unique(errors_cover)
+
+# 4. Each transect should have at least 1 observation at each point
+cover_df <- cover_df %>% group_by(MacroPlot.Name, Sample.Event.Date, Transect) %>% mutate(NumPts = n_distinct(Point)) %>% mutate(NumTapePts = n_distinct(Tape))%>% ungroup()
+
+data <- cover_df
+query <- "cover observation number"
+query_name <- "correct # of observations"
+values_data <- cover_df$NumPts
+values_valid <- 100
+values_check <- values_data == values_valid
+#add to error log
+errors_cover <- rbind(errors_cover, qaqc(data, query, query_message, values_check))
+
+# 5. Each transect should have at least 1 observation at each tape point
+
+data <- cover_df
+query <- "Cover Tape"
+query_name <- "Cover tape location"
+values_data <- cover_df$NumTapePts
+values_valid <- 100
+values_check <- values_data == values_valid
+#add to error log
+errors_cover <- rbind(errors_cover, qaqc(data, query, query_message, values_check))
+
+errors_cover <- unique(errors_cover)
+
+# 6. Status should be X for only litt, wood, bare, rock
+
+data <- cover_df
+query <- "cover status"
+query_message <- "status"
+values_data <- cover_df$Status
+values_valid <- case_when(cover_df$Species %in% c("LITT", "WOOD", "BARE", "ROCK") & cover_df$Status == "X" ~TRUE, !(cover_df$Species %in% c("LITT", "WOOD", "BARE", "ROCK")) & cover_df$Status %in% c("L", "D") ~ TRUE, TRUE ~ FALSE )
+values_check <- values_valid
+#add to error log
+errors_cover <- rbind(errors_cover, qaqc(data, query, query_message, values_check))
+
+errors_cover <- unique(errors_cover)
+
+
+# 8. Check Species
+cover_df <- cover_df %>% group_by(Species) %>% mutate(SpeciesFreq = n()) %>% ungroup()
+query <- "Species reasonable"
+query_message <- "species"
+values_data <- cover_df$Species
+valid_values <- case_when(cover_df$SpeciesFreq >= 2 ~ TRUE, TRUE ~ FALSE)
+values_check <- valid_values
+#Add to error log
+errors_cover <- rbind(errors_cover, qaqc(data, query, query_message, values_check))
+
+
+
+
+write_xlsx(errors_cover, "Error Logs/DINO_errors.xlsx")
+
+
+
+
+```
+
+
+
+

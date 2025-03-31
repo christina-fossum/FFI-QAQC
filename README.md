@@ -129,8 +129,67 @@ Density - Quadrats
   9. Height = 0.15, 0.3, 0.6, 1, 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
-  
+
+3. FMH PIPO Plots
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Surface Fuels - Fine
+  1. # of transects = 4
+  2. Transect length = 6ft (1hr & 10hr), 12ft (100hr)
+  3. Azimuth = 0-359
+  4. FWD constant = 'Default'
+  5. 4 'hits' (4x transect data) per plot
+  6. Outlier values flagged for 1hr, 10hr, 100hr
+Surface Fuels - 1000Hr
+  1. # of transects = 4
+  2. Transect length = 100ft
+  3. CWD constant = 'Default'
+  4. Outlier values flagged for diameter
+  5. Decay class = 3 or 4
+Surface Fuels - Duff/Litter
+  1. # of transects = 4
+  2. Sample location = 1, 5, 10, 15, 20, 25, 30, 35, 40, 45
+  3. # samples per transect = 10
+  4. DL fuel constant = 'Defualt'
+  5. Outlier values flagged for depth
+Trees - Individuals (metric)
+  1. Subplot = 1 or 2
+  2. Quarter = 1, 2, 3, or 4
+  3. Subplot = 1 if DBH >= 15cm; subplot = 2 if DBH < 15
+  4. Species = PIPO
+  5. Plot and snag area = 0.1
+  6. Outlier values flagged for DBH, Char Height, Scorch Height, Scorch %
+  7. Correct Crown Class Status
+Cover - Points (metric)
+  1. # of transects = 2
+  2. Transect length = 50m
+  3. Points per transect = 166
+  4. NumPts = 166 (minimum 1 observation at each point)
+  5. Height value should be present for 1st hit plants only
+  6. Outlier values flagged for plant height
+  7. Outlier values flagged for species
+Post Burn Severity (metric)
+  1. # of transects = 4
+  2. Transect length = 15.24
+  3. Points per transect = 10
+  4. Each transect has 10 rows of data
+  5. Sample locations = 1, 5, 10, 15, 20, 25, 30, 35, 40, 45
+Density - Belts (metric)
+  1. # of transects = 2
+  2. # of subbelts = 10
+  3. Transect length = 50m
+  4. Transect width = 2m
+  5. Transect Area = 100m
+  6. Sub-belt = 1, 2, 3, 4, 5, 6, 7, 8, 9, or 10
+  7. Transect = 1 or 2
+Seedlings
+  1. # of transects = 1
+  2. # quadrats per transect = 4
+  3. Quad length = 25m
+  4. Quad width = 10m
+  5. Quad area = 100m
+  6. Transect = 1
+  7. Quadrat = 1, 2, 3, or 4
+  8. Status = L
 
 
 
