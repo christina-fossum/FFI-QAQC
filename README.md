@@ -71,6 +71,10 @@ SOP:
   3. Type Repo name into "Project Directory Name"
   4. Modify "Create Project as a Sub-directory" field to desktop
 - Make minor edit to README file and posh to GitHub to make sure working
+  1. Open README file from within R studio
+  2. Add some line of new text to top of doc
+  3. In upper right-hand corner, select 'Git' pane and check box next to the README.md doc
+  4. Click 'Commit Pending Changes' -> type brief commit message -> Click 'commit' -> 'push'
 
 
 
