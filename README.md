@@ -21,7 +21,7 @@ B. Error Queries
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-1. 2024 Rapid Assessment Plots
+# 1. 2024 Rapid Assessment Plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Surface Fuels - Fine (metric)
   1. # of transects = 2
