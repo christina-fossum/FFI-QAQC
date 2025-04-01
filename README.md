@@ -27,8 +27,50 @@ Contents:
 
 
 
+SOP:
 
+(1) Install R Software
+- Install 'R' and 'RStudio'via software center
+- Make sure RStudio is running desired (most recent) version of R. 
+  1. Type 'R.version.string' into R console. If you are Not running desired version, then
+  2. Within RStudio, go to Tools -> Global Options -> General -> Change R version
+  3. Quit and restart, and check 'R.version.string' again to make sure you are good
+- Update R packages: within R console, type 'update.packages(ask = FALSE, checkBuilt = TRUE)'
 
+(2) Install Git
+- Install 'Git' via software center
+- Open Git Bash terminal, type in 'git --version'
+- This should show you the version of Git you have installed
+
+(3) Create GitHub account & follow the 'FFI-QAQC' repository
+
+(4) Configure Git with GitHub account
+- Within Git Bash, type the following commands:
+  1. 'git config --global username christina-fossum' (your GitHub user name)
+  2. 'git config --global user.email christina_fossum@nps.gov' (your account email address)
+- Check that now git knows your username and email:
+  1. 'git config --global --list'
+  
+(5) Set up personal access token for HTTPS
+- Install/load 'usethis' package in R. Within RStudio, enter the following commands:
+  1. 'install.packages("usethis")
+  2. library(usethis)
+- Run: 'usethis::create_github_token()' (This should take you to GitHub)
+- Click "Generate Token"
+- Copy PAT onto clipboard
+- Back in RStudio, run 'gitcreds::gitcreds_set()'
+- Paste your PAT when prompted
+
+(6) Clone GitHub repository to local computer using RStudio
+- Disable SSL verification on Git globally. In Git Bash enter:
+  1. 'git config --global http.sslVerify false'
+- Within GitHub repository, click the green code button and copy HTTPS URL to clipboard
+- In RStudio, create a new project:
+  1. New Project -> Version Control -> Git
+  2. Paste URL
+  3. Type Repo name into "Project Directory Name"
+  4. Modify "Create Project as a Sub-directory" field to desktop
+- Make minor edit to README file and posh to GitHub to make sure working
 
 
 
