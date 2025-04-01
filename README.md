@@ -29,6 +29,8 @@ Contents:
 
 SOP:
 
+Setting up GitHub & R
+~~~~~~~~~~~~~~~~~~~~~~
 (1) Install R Software
 - Install 'R' and 'RStudio'via software center
 - Make sure RStudio is running desired (most recent) version of R. 
@@ -75,6 +77,15 @@ SOP:
   2. Add some line of new text to top of doc
   3. In upper right-hand corner, select 'Git' pane and check box next to the README.md doc
   4. Click 'Commit Pending Changes' -> type brief commit message -> Click 'commit' -> 'push'
+
+Generating Error Logs
+~~~~~~~~~~~~~~~~~~~~~
+(1) Export FFI data as .csv files
+- Make sure you are signed into OneDrive account on remote desktop
+- Save these to your local repository in the 'FFI data - WORKING' folder
+
+(2) Load .csv files into appropriate R script, follow script to run QAQC checks and generate error log
+- Make sure to document changes you make to code when you commit to GitHub
 
 
 

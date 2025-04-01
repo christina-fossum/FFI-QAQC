@@ -29,15 +29,15 @@ errors_blank <- data.frame("SavedQuery" = "", "MacroPlot.Name" = "", "Sample.Eve
 qaqc <- function(data, query, query_message, values_check, Comment) {
   errors <- data %>%   
     mutate("SavedQuery" = query, 
-           "Error" = paste(query_message, "=", values_data)) %>%
-    filter(!(values_check) %>% replace_na(TRUE)) %>%   
+           "Error" = paste(query_message, "=", values_check)) %>% 
+    filter(!values_check) %>%  # Filter out values that are not outliers
     select("SavedQuery", "MacroPlot.Name", "Sample.Event.Date", "Error", "Comment")
+  
   if (nrow(errors) == 0) {   
     errors <- errors_blank %>%     
       mutate(SavedQuery = query) 
-  } else {   
-    errors <- errors
-  }
+  } 
+  return(errors)
 }
 
 
@@ -72,7 +72,7 @@ load_data <- function(directory_path, pattern) {
 #Set Working Directory to QAQC Folder: Session -> Set Working Directory -> Choose Directory
 
 # Set "directory_path" to source file location
-directory_path <- "o:/resmgmt/Fire Management/Fire Effects/_QAQC/FFI data - WORKING/FMH_PIPO_2024/"
+directory_path <- "FFI data - WORKING/FMH_PIPO_2024/"
 
 
 # load data (Surface Fuels - Fine)
@@ -172,19 +172,26 @@ fuelsfine_df <- fuelsfine_df %>% mutate(hits = 1) %>%
 errors_FuelsFine <- rbind(errors_FuelsFine, qaqc(fuelsfine_df, "Fuel Fine Hits", "Number of Hits", fuelsfine_df$sumhits == 4))
 
 # 6. Outlier Detection for 1hr, 10hr, 100hr
-test1hr <- rosnerTest(fuelsfine_df$X1.Hr.Count)
-test10hr <- rosnerTest(fuelsfine_df$X10.Hr.Count)
-test100hr <- rosnerTest(fuelsfine_df$X100.Hr.Count)
-maxoutlier1hr <- max(test1hr$all.stats$Value[test1hr$all.stats$Outlier])
-maxoutlier10hr <-  max(test10hr$all.stats$Value[test10hr$all.stats$Outlier])
-maxoutlier100hr <- max(test100hr$all.stats$Value[test100hr$all.stats$Outlier])
-values_check_1hr <- fuelsfine_df$X1.Hr.Count < maxoutlier1hr
-values_check_10hr <- fuelsfine_df$X10.Hr.Count < maxoutlier10hr
-values_check_100hr <- fuelsfine_df$X100.Hr.Count < maxoutlier100hr
 
-errors_FuelsFine <- rbind(errors_FuelsFine, qaqc(fuelsfine_df, "Fine Fuels x1hr value", "One Hour Count Outlier", values_check_1hr))
-errors_FuelsFine <- rbind(errors_FuelsFine, qaqc(fuelsfine_df, "Fine Fuels x10hr value", "10 Hour Count Outlier", values_check_10hr))
-errors_FuelsFine <- rbind(errors_FuelsFine, qaqc(fuelsfine_df, "Fine Fuels x100hr value", "100 Hour Count Outlier", values_check_100hr))
+# Function to detect outliers using Z-score method
+detect_outliers_zscore <- function(data) {
+  z_scores <- (data - mean(data, na.rm = TRUE)) / sd(data, na.rm = TRUE)
+  return(abs(z_scores) > 3)  # Typically, a Z-score > 3 or < -3 is an outlier
+}
+
+# Apply Z-score method to each column
+outliers_1hr_z <- detect_outliers_zscore(fuelsfine_df$X1.Hr.Count)
+outliers_10hr_z <- detect_outliers_zscore(fuelsfine_df$X10.Hr.Count)
+outliers_100hr_z <- detect_outliers_zscore(fuelsfine_df$X100.Hr.Count)
+
+values_check_1hr_z <- !outliers_1hr_z
+values_check_10hr_z <- !outliers_10hr_z
+values_check_100hr_z <- !outliers_100hr_z
+
+# Apply to QAQC function
+errors_FuelsFine <- rbind(errors_FuelsFine, qaqc(fuelsfine_df, "Fine Fuels x1hr value", "One Hour Count Outlier (Z-score)", values_check_1hr_z))
+errors_FuelsFine <- rbind(errors_FuelsFine, qaqc(fuelsfine_df, "Fine Fuels x10hr value", "10 Hour Count Outlier (Z-score)", values_check_10hr_z))
+errors_FuelsFine <- rbind(errors_FuelsFine, qaqc(fuelsfine_df, "Fine Fuels x100hr value", "100 Hour Count Outlier (Z-score)", values_check_100hr_z))
 
 
 ```
@@ -226,10 +233,19 @@ values_check <- fuels1000_df$Decay.Class %in% valid_decay_classes
 errors_Fuels1000 <- rbind(errors_Fuels1000, qaqc(fuels1000_df, "x1000 decay class", "decay class 3 or 4", values_check))
 
 # 5. Outliers flagged for diameter
-test1000hr <- rosnerTest(fuels1000_df$Diameter)
-maxoutlier <- max(test1000hr$all.stats$Value[test1000hr$all.stats$Outlier])
-values_check <- fuels1000_df$Diameter < maxoutlier
-errors_Fuels1000 <- rbind(errors_Fuels1000, qaqc(fuels1000_df, "x1000 Dia value", "Diameter outlier", values_check))
+
+# Function to detect outliers using Z-score method
+detect_outliers_zscore <- function(data) {
+  z_scores <- (data - mean(data, na.rm = TRUE)) / sd(data, na.rm = TRUE)
+  return(abs(z_scores) > 3)  # Typically, a Z-score > 3 or < -3 is an outlier
+}
+
+# Apply Z-score method to each column
+outliers_z <- detect_outliers_zscore(fuels1000_df$Diameter)
+values_check_z <- !outliers_z
+
+# Apply to QAQC function
+errors_Fuels1000 <- rbind(errors_Fuels1000, qaqc(fuels1000_df, "x1000 Dia value", "Diameter Outlier (Z-score)", values_check_z))
 
 
 ```
@@ -278,25 +294,25 @@ errors_FuelsDL <- rbind(errors_FuelsDL, qaqc(fuelsDL_df, "DL FuelConst" , fuelsD
 
 # 5. OUtliers flagged
 
-#Litter
-fuelsDL_df$Litter.Depth[is.na(fuelsDL_df$Litter.Depth)] <- 0
-temp_data <- na.omit(fuelsDL_df$Litter.Depth)
-test <- rosnerTest(temp_data)
-outliers <- test$all.stats$Value[test$all.stats$Outlier]
-max_val <- min(outliers) - 0.1
-values_data <- fuelsDL_df$Litter.Depth
-values_check <- values_data < max_val | is.na(values_data)
-errors_FuelsDL <- rbind(errors_FuelsDL, qaqc(fuelsDL_df, "Litter Outliers", "Litter Depth", values_check))
+# Function to detect outliers using Z-score method
+detect_outliers_zscore <- function(data) {
+  z_scores <- (data - mean(data, na.rm = TRUE)) / sd(data, na.rm = TRUE)
+  return(abs(z_scores) > 3)  # Typically, a Z-score > 3 or < -3 is an outlier
+}
 
-#Duff
-fuelsDL_df$Duff.Depth[is.na(fuelsDL_df$Duff.Depth)] <- 0
-temp_data <- na.omit(fuelsDL_df$Duff.Depth)
-test <- rosnerTest(temp_data)
-outliers <- test$all.stats$Value[test$all.stats$Outlier]
-max_val <- min(outliers) - 0.1
-values_data <- fuelsDL_df$Duff.Depth
-values_check <- values_data < max_val | is.na(values_data)
-errors_FuelsDL <- rbind(errors_FuelsDL, qaqc(fuelsDL_df, "Duff Outliers", "Duff Depth", values_check))
+# Apply Z-score method to each column
+outliers_litt_z <- detect_outliers_zscore(fuelsDL_df$Litter.Depth)
+outliers_duff_z <- detect_outliers_zscore(fuelsDL_df$Duff.Depth)
+
+values_check_litt_z <- !outliers_litt_z
+values_check_duff_z <- !outliers_duff_z
+
+# Apply to QAQC function
+errors_FuelsDL <- rbind(errors_FuelsDL, qaqc(fuelsDL_df, "Litter Outliers", "Litter Depth (z-score)", values_check_litt_z))
+errors_FuelsDL <- rbind(errors_FuelsDL, qaqc(fuelsDL_df, "Duff Outliers", "Duff Depth (z-score)", values_check_duff_z))
+
+
+
 
 
 
@@ -345,72 +361,7 @@ errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "Tree subplot correct", trees
 values_check <- trees_df$Species == "PIPO"
 errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "Tree species", trees_df$Species, values_check))
 
-# 5. Outlier values flagged for DBH, Char Height, Scorch Height, Scorch %
 
-###DBH
-outliers <- tryCatch({
-  rosnerTest(na.omit(trees_df$DBH))$all.stats$Value
-}, error = function(e) {
-  return(NULL)
-})
-if (!is.null(outliers) && length(outliers) > 0) {
-  min_outlier <- min(outliers) + 1
-  max_outlier <- max(outliers) - 1
-} else {
-  min_outlier <- min(trees_df$DBH, na.rm = TRUE)
-  max_outlier <- max(trees_df$DBH, na.rm = TRUE)
-}
-values_data <- trees_df$DBH
-values_check <- trees_df$DBH > min_outlier & trees_df$DBH < max_outlier
-errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "DBH outliers", "DBH", values_check))
-###Char Height
-outliers <- tryCatch({
-  rosnerTest(na.omit(trees_df$Char.Ht.))$all.stats$Value
-}, error = function(e) {
-  return(NULL)
-})
-if (!is.null(outliers) && length(outliers) > 0) {
-  min_outlier <- min(outliers) + 1
-  max_outlier <- max(outliers) - 1
-} else {
-  min_outlier <- min(trees_df$Char.Ht., na.rm = TRUE)
-  max_outlier <- max(trees_df$Char.Ht., na.rm = TRUE)
-}
-values_data <- trees_df$Char.Ht.
-values_check <- trees_df$Char.Ht. > min_outlier & trees_df$Char.Ht. < max_outlier
-errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "Char Ht outliers", "Char Ht", values_check))
-###Scorch Height
-outliers <- tryCatch({
-  rosnerTest(na.omit(trees_df$Scorch.Ht.))$all.stats$Value
-}, error = function(e) {
-  return(NULL)
-})
-if (!is.null(outliers) && length(outliers) > 0) {
-  min_outlier <- min(outliers) + 1
-  max_outlier <- max(outliers) - 1
-} else {
-  min_outlier <- min(trees_df$Scorch.Ht., na.rm = TRUE)
-  max_outlier <- max(trees_df$Scorch.Ht., na.rm = TRUE)
-}
-values_data <- trees_df$Scorch.Ht.
-values_check <- trees_df$Scorch.Ht. > min_outlier & trees_df$Scorch.Ht. < max_outlier
-errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "Scorch Ht outliers", "Scorch Ht", values_check))
-###Scorch Percent
-outliers <- tryCatch({
-  rosnerTest(na.omit(trees_df$Crown.Scorch..))$all.stats$Value
-}, error = function(e) {
-  return(NULL)
-})
-if (!is.null(outliers) && length(outliers) > 0) {
-  min_outlier <- min(outliers) + 1
-  max_outlier <- max(outliers) - 1
-} else {
-  min_outlier <- min(trees_df$Crown.Scorch.., na.rm = TRUE)
-  max_outlier <- max(trees_df$Crown.Scorch.., na.rm = TRUE)
-}
-values_data <- trees_df$Crown.Scorch..
-values_check <- trees_df$Crown.Scorch.. > min_outlier & trees_df$Crown.Scorch.. < max_outlier
-errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "Scorch % outliers", "Scorch %", values_check))
 
 # 6. Correct Crown Class for Snags
 values_valid <- case_when(trees_df$Status == "D" & trees_df$Crown.Class %in% c("BAD", "LBS", "RS") ~ TRUE,
@@ -434,6 +385,44 @@ values_data <- trees_headers$Break.Pnt..Dia.
 values_valid <- 15
 values_check <- values_data == values_valid
 errors_Trees <- rbind(errors_Trees, qaqc(trees_headers, "Tree Break Pt", trees_headers$Break.Pnt..Dia., values_check))
+
+# 5. Outlier values flagged for DBH, Char Height, Scorch Height, Scorch %, Height
+
+#DBH
+# Apply Z-score method to each column
+outliers_dbh_z <- detect_outliers_zscore(trees_df$DBH)
+values_check_dbh_z <- !outliers_dbh_z
+# Apply to QAQC function
+errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "DBH outliers", "DBH outlier (z-score)", values_check_dbh_z))
+
+#Char Height
+# Apply Z-score method to each column
+outliers_char_z <- detect_outliers_zscore(trees_df$Char.Ht.)
+values_check_char_z <- !outliers_char_z
+# Apply to QAQC function
+errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "char outliers", "char outlier (z-score)", values_check_char_z))
+
+#Scorch Height
+# Apply Z-score method to each column
+outliers_scorch_z <- detect_outliers_zscore(trees_df$Scorch.Ht.)
+values_check_scorch_z <- !outliers_scorch_z
+# Apply to QAQC function
+errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "scorch height outliers", "scorch outlier (z-score)", values_check_scorch_z))
+
+#Scorch Percent
+# Apply Z-score method to each column
+outliers_crownscorch_z <- detect_outliers_zscore(trees_df$Crown.Scorch..)
+values_check_crownscorch_z <- !outliers_crownscorch_z
+# Apply to QAQC function
+errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "scorch % outliers", "scorch % (z-score)", values_check_crownscorch_z))
+
+#Height
+# Apply Z-score method to each column
+outliers_height_z <- detect_outliers_zscore(trees_df$Height)
+values_check_height_z <- !outliers_height_z
+# Apply to QAQC function
+errors_Trees <- rbind(errors_Trees, qaqc(trees_df, "height outliers", "height (z-score)", values_check_height_z))
+
 
 
 ```
@@ -487,13 +476,13 @@ values_valid <- case_when(
 errors_cover <- rbind(errors_cover, qaqc(cover_df, "cover height", cover_df$Point, values_valid))
 
 # 6. Outlier values flagged for plant height
-cover_df[is.na(cover_df)] <- 0
-outliers <- rosnerTest(na.omit(cover_df$Height))$all.stats$Value # 1.9, 1.8 are outliers
-max_val <- min(outliers) - 0.1
-values_data <- cover_df$Height
-valid_values <- c(seq(0, max_val, by = 0.01), NA)  
-values_check <- cover_df$Height %in% valid_values
-errors_cover <- rbind(errors_cover, qaqc(cover_df, "cover height outliers", cover_df$Height, values_check))
+
+# Apply Z-score method to each column
+outliers_z <- detect_outliers_zscore(cover_df$Height)
+values_check_z <- !outliers_z
+# Apply to QAQC function
+errors_cover <- rbind(errors_cover, qaqc(cover_df, "Height outliers", "Height outlier (z-score)", values_check_z))
+
 
 # 7. Outlier values flagged for cover species
 cover_df <- cover_df %>% group_by(Species) %>% mutate(SpeciesFreq = n()) %>% ungroup()
