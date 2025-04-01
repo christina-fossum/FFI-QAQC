@@ -1,195 +1,29 @@
 # FFI-QAQC
-QAQC for ROMO FFI data
+
+Rocky Mountain National Park Fire Effects
+Automated process for conducting QA/QC of FFI data in R
 
 Edited: Christina Fossum 3/31/2025
 
-Contents
-A. Overview and Use
-B. Error Queries
+
+Purpose: 
+The goal of this process is to provide a systematic approach to ensure accuracy and consistency in our program's fire effects data, as well as to provide a single accessible location to document and track progress.
+
+Workflow:
+1. Clone 'FFI-QAQC' github repository onto desktop
+2. Download FFI data into 'FFI Data - WORKING' folder within desktop repository
+3. Track changes to code by frequently committing to GitHub repository
+4. Log progress on Error Logs 
+
+Contents:
+- 'FFI-QAQC' R project
+- Individual R scripts for conducting QAQC error analyses 
     1. 2024 Rapid Assessment Plots
     2. 2024 Allenspark Plots
-    3. FMH PIPO plots
-
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-B. Error Queries
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*Outliers detected using Rosner's statistical test ('EnvStats' R package)
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-1. 2024 Rapid Assessment Plots
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Surface Fuels - Fine (metric)
-  1. # of transects = 2
-  2. Transect Length = 20m (for 1hr, 10hr, 100hr)
-  3. FWD constant = 'Ponderosa pine'
-  4. Transect 1 azimuth = 0; Transect 2 azimuth = 270
-  5. 2 'hits' (2x transect data) per plot
-  6. Outlier values flagged for 1hr, 10hr, 100hr fuel counts
-Surface Fuels - 100Hr (metric)
-  1. # of transects = 2
-  2. Transect length = 20m
-  3. CWD constant = 'Ponderosa pine'
-  4. Outlier values flagged for 1000Hr fuel diameters
-  5. Decay class = 3 or 4
-Surface Fuels - Duff/Litter (metric)
-  1. # of transects = 2
-  2. Sample locations = 0.5, 3.5, 6.5, 13.5, 16.5, 19.5
-  3. # samples per transect = 6
-  4. DL fuel constant = 'Ponderosa pine'
-  5. Outlier values flagged for Litter, Duff, & Fuelbed depths
-Trees - Individuals (metric)
-  1. Subplot = 1 or 2
-  2. Quarter = 1, 2, 3, or 4
-  3. Subplot = 1 if DBH >= 15; subplot = 2 if DBH < 15
-  4. Species = PIPO
-  5. Outlier values flagged for DBH, Char Ht, Schorch Ht, Scorch %
-  6. Correct Crown Class Status
-Cover - Points (metric)
-  1. # of transects = 2
-  2. Transect length = 20m
-  3. Points per transect = 20
-  4. 'Point' = 'tape'
-  5. NumPts = 20 (minimum of 1 obvservation per point)
-  6. Height value should be present for 1st hit plants only
-  7. Outlier values flagged for height
-  8. Outlier values flagged for species
-Post Burn Severity (metric)
-  1. # of transects = 2
-  2. Transect length = 20m
-  3. Points per transect = 6
-  4. Each transect has 6 rows of data
-  5. Sample locations = 0.5, 3.5, 6.5, 13.5, 16.5, 19.5
-Density - Quadrats (metric)
-  1. # transects = 1
-  2. # quadrats per transect = 4
-  3. Quad length = 10m
-  4. Quad width = 10m
-  5. Quad area = 78.5m
-  6. Transect = 1
-  7. Quadrat = 1, 2, 3, or 4
-  8. Status = L
-  9. Height = 1, 2, 3, 4, 5, 6, or 7
-~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-2. 2024 Allenspark Plots
-~~~~~~~~~~~~~~~~~~~~~~~~
-Surface fuels - Fine (metric)
-  1. # of transects = 2
-  2. Transect length = 25.24m (1hr, 10hr, 100hr)
-  3. FWD constant = 'Douglas fir'
-  4. Transect 1 azimuth = 180; Transect 2 azimuth = 270
-  5. 2 'hits' (2x transect data) per plot
-  6. Outlier values flagged for 1hr, 10hr, 100hr fuel count
-Surface fuels - 1000Hr (metric)
-  1. # of transects = 2
-  2. Transect length = 20m
-  3. CWD constant = 'Douglas fir'
-  4. Outlier values flagged for 1000Hr fuel diameter
-  5. Decay class = 3 or 4
-Surface Fuels - Duff/Litter (metric)
-  1. # of transects = 2
-  2. Sample locations = 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
-  3. # samples per transect = 10
-  4. DL fuel constant = 'Douglas fir'
-  5. Outlier values flagged for duff/litter
-Trees - Individuals (metric)
-  1. Subplot = 1 or 2
-  2. Quarters = 1, 2, 3, or 4
-  3. Subplot = 1 if DBH >= 15; Subplot = 2 if DBH < 15cm
-  4. Species = PICO, PSME, ABLA, or PIEN
-  5. Outlier values flagged for DBH
-  6. Correct crown class status for snags
-  7. Plot area = 0.05
-  8. Snag plot area = 0.05
-  9. Break pt diameter = 15cm
-Cover - Points (metric)
-  1. # of transects = 2
-  2. Transect length = 25m
-  3. Points per transect = 25
-  4. 'Point' = 'tape'
-  5. NumPts = 25
-  6. Height value should be present for 1st hit plants only
-  7. Outlier values flagged for plant height
-  8. Outlier values flagged for cover species
-Density - Quadrats
-  1. # transects = 1
-  2. # quadrats per transect = 4
-  3. Quad length = 3.5m
-  4. Quad width = 3.5m
-  5. Quad area = 6.25m
-  6. Transect = 1
-  7. Quadrat = 1, 2, 3, or 4
-  8. Status = L
-  9. Height = 0.15, 0.3, 0.6, 1, 2
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-3. FMH PIPO Plots
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Surface Fuels - Fine
-  1. # of transects = 4
-  2. Transect length = 6ft (1hr & 10hr), 12ft (100hr)
-  3. Azimuth = 0-359
-  4. FWD constant = 'Default'
-  5. 4 'hits' (4x transect data) per plot
-  6. Outlier values flagged for 1hr, 10hr, 100hr
-Surface Fuels - 1000Hr
-  1. # of transects = 4
-  2. Transect length = 100ft
-  3. CWD constant = 'Default'
-  4. Outlier values flagged for diameter
-  5. Decay class = 3 or 4
-Surface Fuels - Duff/Litter
-  1. # of transects = 4
-  2. Sample location = 1, 5, 10, 15, 20, 25, 30, 35, 40, 45
-  3. # samples per transect = 10
-  4. DL fuel constant = 'Defualt'
-  5. Outlier values flagged for depth
-Trees - Individuals (metric)
-  1. Subplot = 1 or 2
-  2. Quarter = 1, 2, 3, or 4
-  3. Subplot = 1 if DBH >= 15cm; subplot = 2 if DBH < 15
-  4. Species = PIPO
-  5. Plot and snag area = 0.1
-  6. Outlier values flagged for DBH, Char Height, Scorch Height, Scorch %
-  7. Correct Crown Class Status
-Cover - Points (metric)
-  1. # of transects = 2
-  2. Transect length = 50m
-  3. Points per transect = 166
-  4. NumPts = 166 (minimum 1 observation at each point)
-  5. Height value should be present for 1st hit plants only
-  6. Outlier values flagged for plant height
-  7. Outlier values flagged for species
-Post Burn Severity (metric)
-  1. # of transects = 4
-  2. Transect length = 15.24
-  3. Points per transect = 10
-  4. Each transect has 10 rows of data
-  5. Sample locations = 1, 5, 10, 15, 20, 25, 30, 35, 40, 45
-Density - Belts (metric)
-  1. # of transects = 2
-  2. # of subbelts = 10
-  3. Transect length = 50m
-  4. Transect width = 2m
-  5. Transect Area = 100m
-  6. Sub-belt = 1, 2, 3, 4, 5, 6, 7, 8, 9, or 10
-  7. Transect = 1 or 2
-Seedlings
-  1. # of transects = 1
-  2. # quadrats per transect = 4
-  3. Quad length = 25m
-  4. Quad width = 10m
-  5. Quad area = 100m
-  6. Transect = 1
-  7. Quadrat = 1, 2, 3, or 4
-  8. Status = L
+    3. FMH PIPO Plots
+- 'FFI data - WORKING' folder (this is where you download data from FFI - just store these files locally, do NOT need to commit to GitHub)
+- 'Error Logs' folder: Excel files for logging error checking progress
+- '2024PlotFFIKey' excel file: Outline of error log queries contained in R scripts
 
 
 
