@@ -78,7 +78,7 @@ Setting up GitHub & R
   3. In upper right-hand corner, select 'Git' pane and check box next to the README.md doc
   4. Click 'Commit Pending Changes' -> type brief commit message -> Click 'commit' -> 'push'
 
-Generating Error Logs
+Generating Error Logs & Checking FFI Data
 ~~~~~~~~~~~~~~~~~~~~~
 (1) Export FFI data as .csv files
 - Make sure you are signed into OneDrive account on remote desktop
@@ -86,9 +86,9 @@ Generating Error Logs
 
 (2) Load .csv files into appropriate R script, follow script to run QAQC checks and generate error log
 - Make sure to document changes you make to code when you commit to GitHub
+- Look over excel error log file to make sure errors visually make sense
 
-
-
+(3) Use error log to check FFI data and make appropriate changes - Document changes on error log!
 
 
 

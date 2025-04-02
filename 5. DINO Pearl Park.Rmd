@@ -1,0 +1,161 @@
+---
+title: "5. DINO Pearl Park"
+author: "Christina Fossum"
+date: "2025-04-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+April 02, 2025
+Christina Fossum
+Purpose: QAQC Functions for DINO Plot Data
+
+# Step 1. Load packages and functions
+```{r}
+#Load packages
+library(tidyverse)
+library(dplyr)
+library(writexl)
+library(knitr)
+library(EnvStats)
+
+# Create Blank error log
+errors_blank <- data.frame("SavedQuery" = "", "MacroPlot.Name" = "", "Sample.Event.Date" = "", "Error" = "No Error", "Comment" = "")
+
+# QAQC Function
+qaqc <- function(data, query, query_message, values_check, Comment) {
+  errors <- data %>%   
+    mutate("SavedQuery" = query, 
+           "Error" = paste(query_message, "=", values_check)) %>% 
+    filter(!values_check) %>%  # Filter out values that are not outliers
+    select("SavedQuery", "MacroPlot.Name", "Sample.Event.Date", "Error", "Comment")
+  
+  if (nrow(errors) == 0) {   
+    errors <- errors_blank %>%     
+      mutate(SavedQuery = query) 
+  } 
+  return(errors)
+}
+
+
+# Header loading function
+load_headers <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    file_data <- read.csv(file) %>% select(1:10) %>% filter(Visited == "True")
+    file_data <- file_data %>% mutate(Comment = "")
+  })
+  return(do.call(rbind, data_list))
+}
+
+
+
+# Data Loading Function
+load_data <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    file_data <- read.csv(file, skip = 3) 
+    file_data <- file_data %>% mutate(Comment = "")
+  })
+  return(do.call(rbind, data_list))
+}
+
+```
+
+
+# Step 2: Load Data
+```{r}
+
+#Set Working Directory to QAQC Folder: Session -> Set Working Directory -> Choose Directory
+
+# Set "directory_path" to source file location
+directory_path <- "FFI data - WORKING/DINO_PearlPark/"
+
+
+# load data (Cover - Points)
+cover_df <- load_data(directory_path, "_Cover - Points \\(metric\\)\\.csv$")
+cover_headers <-load_headers(directory_path, "_Cover - Points \\(metric\\)\\.csv$")
+
+
+
+```
+
+# Step 3: Data Checks
+
+
+# Cover - Points (metric)
+
+Checks: 
+1. # of transects = 1
+2. Transect Length = 100m
+3. Points per transect = 200
+4. Offset = 0
+5. At least 2 observations per point
+6. Tape = 0.5 - 50 (by 0.5)
+7. Outliers flagged for species
+
+```{r}
+
+# QAQC Checks 
+
+# 1. # Transects = 1
+values_data <- cover_headers$Num..Transects 
+values_valid <- 1 
+values_check <- values_data == values_valid
+errors_cover <- qaqc(cover_headers, "Cover NumTran", cover_headers$Num..Transects, values_check)
+
+# 2. Transect Length = 100m
+values_data <- cover_headers$Tran..Length
+values_valid <- 100
+values_check <- values_data == values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_headers, "Cover Tran Length", cover_headers$Tran..Length, values_check))
+ 
+# 3. Points per transect = 200
+values_data <- cover_headers$Num..Pts..Tran.
+values_valid <- 200
+values_check <- values_data == values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_headers, "Cover pts per transect", cover_headers$Num..Pts..Tran., values_check))
+
+# 4. Offset = 0
+values_data <- cover_headers$Offset
+values_valid <- 0
+values_check <- values_data %in% values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_headers, "offset", cover_headers$Offset, values_check))
+
+# 5. NumPts = 166
+cover_df <- cover_df %>% group_by(MacroPlot.Name, Sample.Event.Date, Tape) %>% mutate(NumPts = n()) %>% ungroup()
+values_data <- cover_df$NumPts
+values_valid <- c(2:10)
+values_check <- values_data %in% values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_df, "cover obvs #", cover_df$NumPts, values_check))
+
+# 6. Tape = 0.5 - 50 by 0.5
+values_data <- cover_df$Tape
+values_valid <- seq(0.5, 50, by = 0.5)
+values_check <- values_data %in% values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_df, "tape point", cover_df$Tape, values_check))
+
+
+# 7. Outlier values flagged for cover species
+cover_df <- cover_df %>% group_by(Species) %>% mutate(SpeciesFreq = n()) %>% ungroup()
+valid_values <- case_when(cover_df$SpeciesFreq >= 2 ~ TRUE, TRUE ~ FALSE)
+errors_cover <- rbind(errors_cover, qaqc(cover_df, "species outlier" , cover_df$Species, valid_values))
+
+```
+
+# Step 3: Save Error Log
+
+
+```{r}
+
+write_xlsx(errors_cover,"Error Logs/DINOPearlPark.xlsx")
+
+```
+
+
+

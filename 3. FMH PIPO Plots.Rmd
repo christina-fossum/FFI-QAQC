@@ -706,11 +706,10 @@ errors_seedlings <- rbind(errors_seedlings, qaqc(seedling_df, "seedling height",
 ## Step 4. Combine error logs and save as .xslx
 
 ```{r}
-errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_cover, errors_BS, errors_seedlings)
+errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_cover, errors_shrubs, errors_seedlings)
 errors_ALL <- unique(errors_ALL)
 
-write_xlsx(errors_ALL, "O:/resmgmt/Fire Management/Fire Effects/QAQC/Error Logs/RAPASS_2024.xlsx")
-
+write_xlsx(errors_ALL, "Error Logs/2024FMHPIPO.xlsx")
 
 ```
 
