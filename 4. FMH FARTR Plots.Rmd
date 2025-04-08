@@ -58,10 +58,16 @@ load_headers <- function(directory_path, pattern) {
 load_data <- function(directory_path, pattern) {
   list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
   data_list <- lapply(list_files, function(file) {
-    file_data <- read.csv(file, skip = 3) 
-    file_data <- file_data %>% mutate(Comment = "")
+    if (file.info(file)$size == 0) return(NULL)
+    file_data <- tryCatch({
+      read.csv(file, skip = 3) %>% mutate(Comment = "")
+    }, error = function(e) {
+      message("Error reading file: ", file, " - skipping this file.")
+      return(NULL)
+    })
+    return(file_data)
   })
-  return(do.call(rbind, data_list))
+  do.call(rbind, data_list[!sapply(data_list, is.null)])
 }
 
 ```
@@ -549,9 +555,9 @@ Checks:
 5. Transect Area = 100m
 6. Sub-belt = 1, 2, 3, 4, 5, 6, 7, 8, 9, or 10
 7. Transect = 1 
-8. Age Class = I or M
+8. Age Class = I, M, or R
 9. Status = L or D
-10. Count = 1-50
+10. Count = 1-60
 11. Species = CEFE, PUTR2, CEVE, RICE, RUID, BERBE, CHVIL4
 
 ```{r}
@@ -600,9 +606,9 @@ values_valid <- 1
 values_check <- values_data == values_valid
 errors_shrubs <- rbind(errors_shrubs, qaqc(shrub_df, "shrub transect #", "transect", values_check))
 
-# 8. Age Class = I or M
+# 8. Age Class = I, M, or R
 values_data <- shrub_df$Age.Class
-values_valid <- c("I", "M")
+values_valid <- c("I", "M", "R")
 values_check <- values_data %in% values_valid
 errors_shrubs <- rbind(errors_shrubs, qaqc(shrub_df, "shrub age class", "age class", values_check))
 
@@ -612,15 +618,15 @@ values_valid <- c("L", "D")
 values_check <- values_data %in% values_valid
 errors_shrubs <- rbind(errors_shrubs, qaqc(shrub_df, "shrub status", "status", values_check))
 
-# 10. Count = 1-50
+# 10. Count = 1-60
 values_data <- shrub_df$Count
-values_valid <- seq(0, 50, by = 1)
+values_valid <- seq(0, 60, by = 1)
 values_check <- values_data %in% values_valid
 errors_shrubs <- rbind(errors_shrubs, qaqc(shrub_df, "shrub count", "count", values_check))
 
-# 11. Species = CEFE, PUTR2, CEVE, RICE, RUID, BERBE, CHVIL4
+# 11. Species = CEFE, PUTR2, CEVE, RICE, RUID, BERBE, CHVIL4, ROWO
 values_data <- shrub_df$Item.Code
-values_valid <- c("CEFE", "CEVE", "PUTR2", "RICE", "RUID", "BERBE", "CHVIL4")
+values_valid <- c("CEFE", "CEVE", "PUTR2", "RICE", "RUID", "BERBE", "CHVIL4", "ROWO")
 values_check <- values_data %in% values_valid
 errors_shrubs <- rbind(errors_shrubs, qaqc(shrub_df, "shrub species", "species", values_check))
 
@@ -632,9 +638,9 @@ errors_shrubs <- rbind(errors_shrubs, qaqc(shrub_df, "shrub species", "species",
 # Density - Quadrats
 1. # transects = 1
 2. # quadrats per transect = 4
-3. Quad length = 10
+3. Quad length = 25
 4. Quad Width = 10
-5. Quad Area = 78.5
+5. Quad Area = 250
 6. Transect = 1
 7. Quadrat = 1, 2, 3, or 4
 8. Status = L
@@ -656,9 +662,9 @@ values_valid <- 4
 values_check <- values_data == values_valid
 errors_seedlings <- rbind(errors_seedlings, qaqc(seedling_headers, "seedling QuadPerTran", "Quadrats per transect", values_check))
 
-# 3. Quad length = 10
+# 3. Quad length = 25
 values_data <- seedling_headers$Quad..Length
-values_valid <- 10
+values_valid <- 25
 values_check <- values_data == values_valid
 errors_seedlings <- rbind(errors_seedlings, qaqc(seedling_headers, "seedling QuadLength", "Quadrat Length", values_check))
 
@@ -668,9 +674,9 @@ values_valid <- 10
 values_check <- values_data == values_valid
 errors_seedlings <- rbind(errors_seedlings, qaqc(seedling_headers, "seedling QuadWidth", "Quadrat Width", values_check))
 
-# 4. Quad Area = 78.5
+# 4. Quad Area = 250
 values_data <- seedling_headers$Quad..Area
-values_valid <- 78.5
+values_valid <- 250
 values_check <- values_data == values_valid
 errors_seedlings <- rbind(errors_seedlings, qaqc(seedling_headers, "seedling QuadArea", "Quadrat Area", values_check))
 
@@ -707,10 +713,10 @@ errors_seedlings <- rbind(errors_seedlings, qaqc(seedling_df, "seedling height",
 ## Step 4. Combine error logs and save as .xslx
 
 ```{r}
-errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_cover, errors_shrubs, errors_seedlings)
+errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_BS,errors_cover, errors_shrubs, errors_seedlings)
 errors_ALL <- unique(errors_ALL)
 
-write_xlsx(errors_ALL, "Error Logs/2024FMHFARTR.xlsx")
+write_xlsx(errors_ALL, "Error Logs/FMHFARTRALL.xlsx")
 
 ```
 
