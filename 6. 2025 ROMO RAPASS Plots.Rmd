@@ -106,7 +106,7 @@ load_data <- function(directory_path, pattern) {
 #Set Working Directory to QAQC Folder: Session -> Set Working Directory -> Choose Directory
 
 # Set "directory_path" to source file location
-directory_path <- "FFI data - WORKING/2024 fall rx 01yr01/"
+directory_path <- "FFI data - WORKING/2025_PICO/"
 
 # load data (Surface Fuels - Fine)
 fuelsfine_df <- load_data(directory_path, "_Surface Fuels - Fine.csv$")
@@ -1003,7 +1003,7 @@ errors_shrubs <- bind_rows(errors_shrubs, qaqc(
 errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_cover, errors_seedlings, errors_shrubs)
 errors_ALL <- unique(errors_ALL)
 
-write_xlsx(errors_ALL,"Error Logs/2025_2024FallRX_01yr01.xlsx")
+write_xlsx(errors_ALL,"Error Logs/2025_PICO_yr05.xlsx")
 
 
 ```
