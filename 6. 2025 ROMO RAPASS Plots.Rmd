@@ -980,6 +980,17 @@ errors_shrubs <- bind_rows(errors_shrubs, qaqc(
 ```
 
 
+## Step 8. Combine error logs and save as .xslx
+
+```{r}
+errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_cover, errors_seedlings, errors_shrubs)
+errors_ALL <- unique(errors_ALL)
+
+write_xlsx(errors_ALL,"Error Logs/2025_2024FallRX_01yr01.xlsx")
+
+
+```
+
 
 
 
