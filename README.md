@@ -88,7 +88,9 @@ Generating Error Logs & Checking FFI Data
 - Make sure to document changes you make to code when you commit to GitHub
 - Look over excel error log file to make sure errors visually make sense
 
-(3) Use error log to check FFI data and make appropriate changes - Document changes on error log!
+* Minor edits may need to be made to file path etc.
+
+(3) Use error log to check FFI data and make appropriate changes - Document changes in masterfile! 
 
 
 

@@ -1,0 +1,374 @@
+---
+title: "5. DINO"
+author: "Christina Fossum"
+date: "2025-04-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Edited: 10/07/2025 by Christina Fossum
+Purpose: update code for more reader-friendly error logs 
+
+Summary: QAQC code for All DINO plots through 2025 season
+  
+Contents / Steps:
+1. Load packages and functions
+2. Load data
+3. Cover
+4. Combine error logs and save as .xslx
+ 
+
+##1. Load packages and functions
+```{r}
+
+#Load packages
+library(tidyverse)
+library(dplyr)
+library(writexl)
+library(knitr)
+library(EnvStats)
+
+# Create Blank error log
+errors_blank <- data.frame("SavedQuery" = "", "MacroPlot.Name" = "", "Sample.Event.Date" = "", "Error" = "No Error", "Comment" = "")
+
+# QAQC Function
+qaqc <- function(data, query, query_message, values_check, values_data = NULL, Comment = "") {
+  data_checked <- data %>%
+    mutate(SavedQuery = query,
+           Error = if (!is.null(values_data)) {
+             paste0(query_message, " = ", values_data)
+           } else {
+             paste0(query_message, " = ", values_check)
+           },
+           Comment = Comment)
+
+  errors <- data_checked %>%
+    filter(!values_check) %>%
+    select(any_of(c("SavedQuery", "MacroPlot.Name", "Sample.Event.Date", "Error", "Comment")))
+
+  if (nrow(errors) == 0) {
+    errors <- errors_blank %>%
+      mutate(SavedQuery = query)
+  }
+
+  return(errors)
+}
+
+
+# Header loading function
+load_headers <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    file_data <- read.csv(file) %>% select(1:10) %>% filter(Visited == "True")
+    file_data <- file_data %>% mutate(Comment = "")
+  })
+  return(do.call(rbind, data_list))
+}
+
+
+# Data Loading Function
+load_data <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    if (file.info(file)$size == 0) return(NULL)
+    file_data <- tryCatch({
+      read.csv(file, skip = 3) %>% mutate(Comment = "")
+    }, error = function(e) {
+      message("Error reading file: ", file, " - skipping this file.")
+      return(NULL)
+    })
+    return(file_data)
+  })
+  do.call(rbind, data_list[!sapply(data_list, is.null)])
+}
+
+```
+
+
+##2. Load Data
+```{r}
+
+#Set Working Directory to QAQC Folder: Session -> Set Working Directory -> Choose Directory
+
+# Set "directory_path" to source file location
+directory_path <- "FFI data - WORKING/DINO_BighornBasin2025/"
+
+# load data (Cover - Points)
+cover_df <- load_data(directory_path, "_Cover - Points \\(metric\\)\\.csv$")
+cover_headers <-load_headers(directory_path, "_Cover - Points \\(metric\\)\\.csv$")
+
+
+```
+
+
+##3. Cover - Points (metric)
+
+Checks: 
+1. # of transects = 1
+2. Transect Length = 100m
+3. Points per transect = 200
+4. Offset = 0
+5. At least 2 observations per point
+6. Tape = 0.5 - 50 (by 0.5)
+7. Outliers flagged for species
+
+
+
+
+```{r}
+
+# QAQC Checks 
+
+# 1. Number of Transects = 1
+values_data <- cover_headers$Num..Transects
+values_check <- values_data == 1
+errors_cover <- qaqc(
+  data = cover_headers,
+  query = "Cover NumTran",
+  query_message = "Number of Transects",
+  values_check = values_check,
+  values_data = values_data
+)
+
+# 2. Transect Length = 100m
+values_data <- cover_headers$Tran..Length
+values_check <- values_data == 100
+errors_cover <- bind_rows(errors_cover, qaqc(
+  data = cover_headers,
+  query = "Cover Tran Length",
+  query_message = "Transect Length",
+  values_check = values_check,
+  values_data = values_data
+))
+
+# 3. Points per Transect = 200
+values_data <- cover_headers$Num..Pts..Tran.
+values_check <- values_data == 200
+errors_cover <- bind_rows(errors_cover, qaqc(
+  data = cover_headers,
+  query = "Cover Points Per Transect",
+  query_message = "Points per Transect",
+  values_check = values_check,
+  values_data = values_data
+))
+
+# 4. Offset = 0
+values_data <- cover_headers$Offset
+values_check <- values_data == 0
+errors_cover <- bind_rows(errors_cover, qaqc(
+  data = cover_headers,
+  query = "Point offset",
+  query_message = "Offset",
+  values_check = values_check,
+  values_data = values_data
+))
+
+# 4. Point = 2*Tape
+values_data <- paste0("Point: ", cover_df$Point, " | Tape: ", cover_df$Tape)
+values_check <- cover_df$Point == 2*cover_df$Tape
+errors_cover <- bind_rows(errors_cover, qaqc(
+  data = cover_df,
+  query = "Cover Point/Tape Match",
+  query_message = "Point matches Tape",
+  values_check = values_check,
+  values_data = values_data
+))
+
+
+
+
+
+# at least 2 observations for each point
+cover_df <- cover_df %>%
+  group_by(Transect, Point) %>%
+  mutate(PointFreq = n()) %>%
+  ungroup()
+
+values_check <- cover_df$PointFreq >= 2
+values_data <- paste0("Transect: ", cover_df$Transect,
+                      ", Point: ", cover_df$Point,
+                      ", Count: ", cover_df$PointFreq)
+
+errors_cover <- bind_rows(errors_cover, qaqc(
+  data = cover_df,
+  query = "Insufficient Observations per Point",
+  query_message = "Each Transect–Point should have ≥ 2 observations",
+  values_check = values_check,
+  values_data = values_data
+))
+
+
+
+# 8. Species with <2 records flagged
+cover_df <- cover_df %>%
+  group_by(Species) %>%
+  mutate(SpeciesFreq = n()) %>%
+  ungroup()
+
+values_check <- cover_df$SpeciesFreq >= 2
+values_data <- paste0("Species: ", cover_df$Species, ", Freq: ", cover_df$SpeciesFreq)
+
+errors_cover <- bind_rows(errors_cover, qaqc(
+  data = cover_df,
+  query = "Rare Species",
+  query_message = "Species occurs < 2 times",
+  values_check = values_check,
+  values_data = values_data
+))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+April 02, 2025
+Christina Fossum
+Purpose: QAQC Functions for DINO Plot Data
+
+# Step 1. Load packages and functions
+```{r}
+#Load packages
+library(tidyverse)
+library(dplyr)
+library(writexl)
+library(knitr)
+library(EnvStats)
+
+# Create Blank error log
+errors_blank <- data.frame("SavedQuery" = "", "MacroPlot.Name" = "", "Sample.Event.Date" = "", "Error" = "No Error", "Comment" = "")
+
+# QAQC Function
+qaqc <- function(data, query, query_message, values_check, Comment) {
+  errors <- data %>%   
+    mutate("SavedQuery" = query, 
+           "Error" = paste(query_message, "=", values_check)) %>% 
+    filter(!values_check) %>%  # Filter out values that are not outliers
+    select("SavedQuery", "MacroPlot.Name", "Sample.Event.Date", "Error", "Comment")
+  
+  if (nrow(errors) == 0) {   
+    errors <- errors_blank %>%     
+      mutate(SavedQuery = query) 
+  } 
+  return(errors)
+}
+
+
+# Header loading function
+load_headers <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    file_data <- read.csv(file) %>% select(1:10) %>% filter(Visited == "True")
+    file_data <- file_data %>% mutate(Comment = "")
+  })
+  return(do.call(rbind, data_list))
+}
+
+
+
+# Data Loading Function
+load_data <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    file_data <- read.csv(file, skip = 3) 
+    file_data <- file_data %>% mutate(Comment = "")
+  })
+  return(do.call(rbind, data_list))
+}
+
+```
+
+
+# Cover - Points (metric)
+
+Checks: 
+1. # of transects = 1
+2. Transect Length = 100m
+3. Points per transect = 200
+4. Offset = 0
+5. At least 2 observations per point
+6. Tape = 0.5 - 50 (by 0.5)
+7. Outliers flagged for species
+
+```{r}
+
+# QAQC Checks 
+
+# 1. # Transects = 1
+values_data <- cover_headers$Num..Transects 
+values_valid <- 1 
+values_check <- values_data == values_valid
+errors_cover <- qaqc(cover_headers, "Cover NumTran", cover_headers$Num..Transects, values_check)
+
+# 2. Transect Length = 100m
+values_data <- cover_headers$Tran..Length
+values_valid <- 100
+values_check <- values_data == values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_headers, "Cover Tran Length", cover_headers$Tran..Length, values_check))
+ 
+# 3. Points per transect = 200
+values_data <- cover_headers$Num..Pts..Tran.
+values_valid <- 200
+values_check <- values_data == values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_headers, "Cover pts per transect", cover_headers$Num..Pts..Tran., values_check))
+
+# 4. Offset = 0
+values_data <- cover_headers$Offset
+values_valid <- 0
+values_check <- values_data %in% values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_headers, "offset", cover_headers$Offset, values_check))
+
+# 5. NumPts = 166
+cover_df <- cover_df %>% group_by(MacroPlot.Name, Sample.Event.Date, Tape) %>% mutate(NumPts = n()) %>% ungroup()
+values_data <- cover_df$NumPts
+values_valid <- c(2:10)
+values_check <- values_data %in% values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_df, "cover obvs #", cover_df$NumPts, values_check))
+
+# 6. Tape = 0.5 - 50 by 0.5
+values_data <- cover_df$Tape
+values_valid <- seq(0.5, 50, by = 0.5)
+values_check <- values_data %in% values_valid
+errors_cover <- rbind(errors_cover, qaqc(cover_df, "tape point", cover_df$Tape, values_check))
+
+
+# 7. Outlier values flagged for cover species
+cover_df <- cover_df %>% group_by(Species) %>% mutate(SpeciesFreq = n()) %>% ungroup()
+valid_values <- case_when(cover_df$SpeciesFreq >= 2 ~ TRUE, TRUE ~ FALSE)
+errors_cover <- rbind(errors_cover, qaqc(cover_df, "species outlier" , cover_df$Species, valid_values))
+
+```
+
+# Step 3: Save Error Log
+
+
+```{r}
+
+write_xlsx(errors_cover,"Error Logs/DINO_BighornBasin2025.xlsx")
+
+```
+
+
+

@@ -17,6 +17,8 @@ Summary: QAQC code for
   # 2. 2025 Spring 01yr01 reads (RAP_13, RAP_14, RAP_15, RAP_16, PIPS_16, PIPS_08)
   # 3. Pre reads for fall 2025 RX (PIPS_01, PIPS_02, PIPS_05, PIPO_09, PIPO_27, PIPS_14)
   
+  ***Note: edit filepath for (2) load data, and fuel constant for fuels queries, and tree species!
+  
 Contents / Steps:
 1. Load packages and functions
 2. Load data
@@ -526,18 +528,33 @@ errors_Trees <- rbind(errors_Trees,
   )
 )
 
-# 4. Species = PIPO
+# 4a. Species = PIPO
+#values_data <- trees_df$Species
+#values_check <- values_data == "PIPO"
+#errors_Trees <- rbind(errors_Trees,
+  #qaqc(
+    #trees_df,
+    #"Tree Species",
+   # "Species must be PIPO",
+   # values_check,
+  #  values_data = values_data
+#  )
+#)
+
+# 4b. Species = PIPO
 values_data <- trees_df$Species
-values_check <- values_data == "PIPO"
+values_check <- values_data %in% c("PICO", "PIEN", "ABLA")
 errors_Trees <- rbind(errors_Trees,
   qaqc(
     trees_df,
     "Tree Species",
-    "Species must be PIPO",
+    "Species must be one of list",
     values_check,
     values_data = values_data
   )
 )
+
+
 
 # 5. Crown Class logic 
 values_check <- case_when(
