@@ -106,7 +106,7 @@ load_data <- function(directory_path, pattern) {
 #Set Working Directory to QAQC Folder: Session -> Set Working Directory -> Choose Directory
 
 # Set "directory_path" to source file location
-directory_path <- "FFI data - WORKING/2025_PICO/"
+directory_path <- "FFI Data - WORKING/2025_Spring2025RX_01yr01/New folder/"
 
 # load data (Surface Fuels - Fine)
 fuelsfine_df <- load_data(directory_path, "_Surface Fuels - Fine.csv$")
@@ -529,30 +529,30 @@ errors_Trees <- rbind(errors_Trees,
 )
 
 # 4a. Species = PIPO
-#values_data <- trees_df$Species
-#values_check <- values_data == "PIPO"
-#errors_Trees <- rbind(errors_Trees,
-  #qaqc(
-    #trees_df,
-    #"Tree Species",
-   # "Species must be PIPO",
-   # values_check,
-  #  values_data = values_data
-#  )
-#)
-
-# 4b. Species = PIPO
 values_data <- trees_df$Species
-values_check <- values_data %in% c("PICO", "PIEN", "ABLA")
+values_check <- values_data == "PIPO"
 errors_Trees <- rbind(errors_Trees,
   qaqc(
     trees_df,
     "Tree Species",
-    "Species must be one of list",
+    "Species must be PIPO",
     values_check,
     values_data = values_data
   )
 )
+
+# 4b. Species = PIPO
+#values_data <- trees_df$Species
+#values_check <- values_data %in% c("PICO", "PIEN", "ABLA")
+#errors_Trees <- rbind(errors_Trees,
+  #qaqc(
+    #trees_df,
+    #"Tree Species",
+    #"Species must be one of list",
+    #values_check,
+    #values_data = values_data
+  #)
+#)
 
 
 
@@ -1003,7 +1003,7 @@ errors_shrubs <- bind_rows(errors_shrubs, qaqc(
 errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_cover, errors_seedlings, errors_shrubs)
 errors_ALL <- unique(errors_ALL)
 
-write_xlsx(errors_ALL,"Error Logs/2025_PICO_yr05.xlsx")
+write_xlsx(errors_ALL,"Error Logs/2025_2025SpringRX.xlsx")
 
 
 ```
