@@ -1,0 +1,696 @@
+---
+title: "7. Post-Burn RAPASS (2025-)"
+author: "Christina Fossum"
+date: "2025-10-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Date: 10/14/2025
+Edited by: Christina Fossum
+
+**test
+Summary: QAQC code for immediate post-burn RAP plots (years 2025+)
+
+  
+Contents / Steps:
+1. Load packages and functions
+2. Load data
+3. Surface fuels
+  A. Fine
+  B. Coarse
+  C. Litter/Duff
+4. Trees
+5. Post Burn Severity
+6. Combine error logs and save as .xslx
+  
+
+##1. Load packages and functions
+```{r}
+
+#Load packages
+library(tidyverse)
+library(dplyr)
+library(writexl)
+library(knitr)
+library(EnvStats)
+
+# Create Blank error log
+errors_blank <- data.frame("SavedQuery" = "", "MacroPlot.Name" = "", "Sample.Event.Date" = "", "Error" = "No Error", "Comment" = "")
+
+# QAQC Function
+qaqc <- function(data, query, query_message, values_check, values_data = NULL, Comment = "") {
+  data_checked <- data %>%
+    mutate(SavedQuery = query,
+           Error = if (!is.null(values_data)) {
+             paste0(query_message, " = ", values_data)
+           } else {
+             paste0(query_message, " = ", values_check)
+           },
+           Comment = Comment)
+
+  errors <- data_checked %>%
+    filter(!values_check) %>%
+    select(any_of(c("SavedQuery", "MacroPlot.Name", "Sample.Event.Date", "Error", "Comment")))
+
+  if (nrow(errors) == 0) {
+    errors <- errors_blank %>%
+      mutate(SavedQuery = query)
+  }
+
+  return(errors)
+}
+
+
+# Header loading function
+load_headers <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    file_data <- read.csv(file) %>% select(1:10) %>% filter(Visited == "True")
+    file_data <- file_data %>% mutate(Comment = "")
+  })
+  return(do.call(rbind, data_list))
+}
+
+
+# Data Loading Function
+load_data <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    if (file.info(file)$size == 0) return(NULL)
+    file_data <- tryCatch({
+      read.csv(file, skip = 3) %>% mutate(Comment = "")
+    }, error = function(e) {
+      message("Error reading file: ", file, " - skipping this file.")
+      return(NULL)
+    })
+    return(file_data)
+  })
+  do.call(rbind, data_list[!sapply(data_list, is.null)])
+}
+
+```
+
+
+##2. Load Data
+```{r}
+
+#Set Working Directory to QAQC Folder: Session -> Set Working Directory -> Choose Directory
+
+# Set "directory_path" to source file location
+
+directory_path <- "FFI data - WORKING/2025 FALL RX 00PRE/"
+
+
+# load data (Surface Fuels - Fine)
+fuelsfine_df <- load_data(directory_path, "_Surface Fuels - Fine.csv$")
+fuelsfine_headers <-load_headers(directory_path, "_Surface Fuels - Fine.csv$")
+
+# load data (Surface Fuels - 1000Hr)
+fuels1000_df <- load_data(directory_path, "_Surface Fuels - 1000Hr.csv$")
+fuels1000_headers <-load_headers(directory_path, "_Surface Fuels - 1000Hr.csv$")
+
+# load data (Surface Fuels - Duff/Litter)
+fuelsDL_df <- load_data(directory_path, "_Surface Fuels - Duff_Litter.csv$")
+fuelsDL_headers <-load_headers(directory_path, "_Surface Fuels - Duff_Litter.csv$")
+
+# load data (Trees - Individuals)
+trees_df <- load_data(directory_path, "_Trees - Individuals \\(metric\\)\\.csv$")
+
+list <- list.files(path = directory_path, pattern = "_Trees - Individuals \\(metric\\)\\.csv$", full.names = TRUE)
+trees_headers <- lapply(list, function(file) read.csv(file, nrows = 1))
+trees_headers <- do.call(rbind, trees_headers)
+
+# load data (Post Burn Severity)
+BS_df <- load_data(directory_path, "_Post Burn Severity.csv$")
+BS_headers <-load_headers(directory_path, "_Post Burn Severity.csv$")
+
+
+```
+
+
+##3. Surface fuels
+
+#3A. Fine Fuel
+Checks:
+1. Number of Transects = 2 
+2. Transect Length = 65.6 for 1hr, 10hr, 100hr
+3. FWD fuel constant = correct
+4. Azimuth is 0 for Transect 1, 270 for transect 2
+5. 2x transect data per plot
+6. Outlier values flagged for 1hr, 10hr, 100hr fuel counts
+
+```{r}
+errors_FuelsFine <- tibble()
+
+check_qaqc <- function(data, query, message, condition, values_data = NULL, Comment = "") {
+  qaqc(data, query, message, condition, values_data = values_data, Comment = Comment)
+}
+
+# 1. Number of Transects = 2
+errors_FuelsFine <- bind_rows(errors_FuelsFine,
+  check_qaqc(
+    data = fuelsfine_headers,
+    query = "Fine Fuels NumTran",
+    message = "Number of Transects",
+    condition = fuelsfine_headers$Num..Transects == 2
+  )
+)
+
+# 2. Transect Length = 65.6 for all
+values_check <- with(fuelsfine_headers,
+  X1.hr.Tran..Len. == 65.6 &
+  X10.hr.Tran..Len. == 65.6 &
+  X100.hr.Tran..Len. == 65.6
+)
+
+values_data <- with(fuelsfine_headers, 
+  paste0("X1=", X1.hr.Tran..Len., ", X10=", X10.hr.Tran..Len., ", X100=", X100.hr.Tran..Len.)
+)
+
+errors_FuelsFine <- bind_rows(errors_FuelsFine,
+  check_qaqc(
+    data = fuelsfine_headers,
+    query = "Fine Fuels TranLen",
+    message = "Invalid Transect Lengths",
+    condition = values_check,
+    values_data = values_data
+  )
+)
+
+
+
+# 3. Fuel Constant = "Default"
+errors_FuelsFine <- bind_rows(errors_FuelsFine,
+  check_qaqc(
+    fuelsfine_df,
+    "Fuel Fine FuelConst",
+    "Fuel Constant",
+    fuelsfine_df$FWDFuConSt == "Default"
+  )
+)
+
+# 4. Azimuth Check
+azimuth_check <- with(fuelsfine_df,
+  (Transect == 1 & Azimuth == 0) |
+  (Transect == 2 & Azimuth == 270)
+)
+errors_FuelsFine <- bind_rows(errors_FuelsFine,
+  check_qaqc(
+    fuelsfine_df,
+    "Fine Fuel Azimuth",
+    "Correct Azimuth",
+    azimuth_check
+  )
+)
+
+# 5. Hits Check: Ensure 2 hits per plot
+fuelsfine_df <- fuelsfine_df %>%
+  mutate(hits = 1) %>%
+  group_by(MacroPlot.Name, Sample.Event.Date) %>%
+  mutate(sumhits = sum(hits)) %>%
+  ungroup()
+
+errors_FuelsFine <- bind_rows(errors_FuelsFine,
+  check_qaqc(
+    fuelsfine_df,
+    "Fuel Fine Hits",
+    "Number of Hits",
+    fuelsfine_df$sumhits == 2
+  )
+)
+
+# 6. Z-score Outlier Checks (for 1hr, 10hr, 100hr)
+detect_outliers_zscore <- function(x) {
+  z <- (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
+  !is.na(z) & abs(z) <= 3  # TRUE means "not an outlier"
+}
+
+# 1hr
+outlier_flag <- !detect_outliers_zscore(fuelsfine_df$X1.Hr.Count)  # TRUE = outlier
+values_data <- ifelse(
+  outlier_flag,
+  paste0("Outlier Value: ", fuelsfine_df$X1.Hr.Count),
+  NA_character_
+)
+
+errors_FuelsFine <- bind_rows(errors_FuelsFine,
+  check_qaqc(
+    data = fuelsfine_df,
+    query = "Fine Fuels x1hr value",
+    message = "One Hour Count Outlier (Z-score)",
+    condition = !outlier_flag,
+    values_data = values_data
+  )
+)
+
+# 10hr
+outlier_flag_10 <- !detect_outliers_zscore(fuelsfine_df$X10.Hr.Count)
+values_data_10 <- ifelse(
+  outlier_flag_10,
+  paste0("Outlier Value: ", fuelsfine_df$X10.Hr.Count),
+  NA_character_
+)
+errors_FuelsFine <- bind_rows(errors_FuelsFine,
+  check_qaqc(
+    fuelsfine_df,
+    "Fine Fuels x10hr value",
+    "10 Hour Count Outlier (Z-score)",
+    condition = !outlier_flag_10,
+    values_data = values_data_10
+  )
+)
+
+# 100hr
+outlier_flag_100 <- !detect_outliers_zscore(fuelsfine_df$X100.Hr.Count)
+values_data_100 <- ifelse(
+  outlier_flag_100,
+  paste0("Outlier Value: ", fuelsfine_df$X100.Hr.Count),
+  NA_character_
+)
+errors_FuelsFine <- bind_rows(errors_FuelsFine,
+  check_qaqc(
+    fuelsfine_df,
+    "Fine Fuels x100hr value",
+    "100 Hour Count Outlier (Z-score)",
+    condition = !outlier_flag_100,
+    values_data = values_data_100
+  )
+)
+
+
+
+```
+
+
+#3B. Coarse Fuel
+Checks: 
+1. Number of transects = 2
+2. Transect length = 65.6
+3. Correct CWD Fuel Constant
+4. Decay Class is either 3 or 4
+5. Outliers flagged for diameter
+
+```{r}
+
+# 1. Number of Transects = 2
+values_data <- fuels1000_headers$Num..Transects
+values_valid <- 2
+values_check <- values_data == values_valid
+errors_Fuels1000 <- qaqc(fuels1000_headers, 
+                         "1000hr Fuels NumTran", 
+                         "Number of Transects", 
+                         values_check,
+                         values_data = values_data)
+
+# 2. Transect Length = 65.6
+values_data <- fuels1000_headers$Tran..Length
+values_valid <- 65.6
+values_check <- values_data == values_valid
+errors_Fuels1000 <- rbind(errors_Fuels1000, 
+                         qaqc(fuels1000_headers, 
+                              "x1000 Fuels TranLen", 
+                              "Transect Length", 
+                              values_check,
+                              values_data = values_data))
+
+# 3. Check Fuel Constant
+values_data <- fuels1000_df$CWDFuConSt
+values_valid <- "Default"
+values_check <- values_data == values_valid
+errors_Fuels1000 <- rbind(errors_Fuels1000, 
+                         qaqc(fuels1000_df, 
+                              "x1000 CWD FuelConst", 
+                              "Fuel Constant", 
+                              values_check,
+                              values_data = values_data))
+
+# 4. Decay class 3 or 4
+valid_decay_classes <- c(3, 4)
+values_data <- fuels1000_df$Decay.Class
+values_check <- values_data %in% valid_decay_classes
+errors_Fuels1000 <- rbind(errors_Fuels1000, 
+                         qaqc(fuels1000_df, 
+                              "x1000 decay class", 
+                              "Decay Class (3 or 4)", 
+                              values_check,
+                              values_data = values_data))
+
+# 5. Outliers flagged for Diameter
+
+# Re-using your detect_outliers_zscore function
+outliers_z <- detect_outliers_zscore(fuels1000_df$Diameter)
+values_check_z <- !outliers_z
+
+# For error messages, show the actual diameter values where outliers flagged
+values_data_z <- ifelse(outliers_z, 
+                        paste0("Outlier Diameter: ", fuels1000_df$Diameter), 
+                        NA_character_)
+
+errors_Fuels1000 <- rbind(errors_Fuels1000, 
+                         qaqc(fuels1000_df, 
+                              "x1000 Dia value", 
+                              "Diameter Outlier (Z-score)", 
+                              values_check_z,
+                              values_data = values_data_z))
+```
+
+#3C. Litter/Duff
+Checks:
+1. # of transects = 2
+2. Correct Sample Locations 
+3. # of samples per transect = 10
+4. Correct DL Fuel Constant
+5. Outlier values flagged for duff, litter
+
+```{r}
+
+# 1. Number of Transects = 2
+values_data <- fuelsDL_headers$Num..Transects
+values_valid <- 2
+values_check <- values_data == values_valid
+errors_FuelsDL <- qaqc(fuelsDL_headers, 
+                      "DL NumTran", 
+                      "Number of Transects", 
+                      values_check, 
+                      values_data = values_data)
+
+# 2. Correct Sample Locations
+values_data <- fuelsDL_df$Samp..Loc.
+values_valid <- c(1, 3, 5, 7, 9, 11, 13, 15, 17, 19)
+values_check <- values_data %in% values_valid
+errors_FuelsDL <- rbind(errors_FuelsDL,
+                       qaqc(fuelsDL_df, 
+                            "DL Sample Location", 
+                            "Invalid Sample Location", 
+                            values_check, 
+                            values_data = values_data))
+
+# 3. # samples per transect = 10
+fuelsDL_df <- fuelsDL_df %>%
+  mutate(hits = 1) %>%
+  group_by(MacroPlot.Name, Sample.Event.Date, Transect) %>%
+  mutate(sumhits = sum(hits)) %>%
+  ungroup()
+
+values_data <- fuelsDL_df$sumhits
+values_valid <- 10
+values_check <- values_data == values_valid
+errors_FuelsDL <- rbind(errors_FuelsDL,
+                       qaqc(fuelsDL_df, 
+                            "LitterDuff Hits Per Transect", 
+                            "Hits Per Transect", 
+                            values_check, 
+                            values_data = values_data))
+
+# 4. Correct DL Fuel Constant
+values_data <- fuelsDL_df$DLFuConSt
+values_valid <- "Default"
+values_check <- values_data == values_valid
+errors_FuelsDL <- rbind(errors_FuelsDL,
+                       qaqc(fuelsDL_df, 
+                            "DL FuelConst", 
+                            "Fuel Constant", 
+                            values_check, 
+                            values_data = values_data))
+
+# 5. Outliers flagged (Litter.Depth, Duff.Depth, Fuelbed.Depth)
+detect_outliers_zscore <- function(data) {
+  z_scores <- (data - mean(data, na.rm = TRUE)) / sd(data, na.rm = TRUE)
+  abs(z_scores) > 3
+}
+
+# Litter.Depth outliers
+outliers_litt_z <- detect_outliers_zscore(fuelsDL_df$Litter.Depth)
+values_check_litt_z <- !outliers_litt_z
+values_data_litt <- ifelse(outliers_litt_z, 
+                          paste0("Outlier Litter Depth: ", fuelsDL_df$Litter.Depth),
+                          NA_character_)
+errors_FuelsDL <- rbind(errors_FuelsDL,
+                       qaqc(fuelsDL_df,
+                            "Litter Outliers",
+                            "Litter Depth (z-score)",
+                            values_check_litt_z,
+                            values_data = values_data_litt))
+
+# Duff.Depth outliers
+outliers_duff_z <- detect_outliers_zscore(fuelsDL_df$Duff.Depth)
+values_check_duff_z <- !outliers_duff_z
+values_data_duff <- ifelse(outliers_duff_z,
+                          paste0("Outlier Duff Depth: ", fuelsDL_df$Duff.Depth),
+                          NA_character_)
+errors_FuelsDL <- rbind(errors_FuelsDL,
+                       qaqc(fuelsDL_df,
+                            "Duff Outliers",
+                            "Duff Depth (z-score)",
+                            values_check_duff_z,
+                            values_data = values_data_duff))
+
+
+
+```
+
+
+##4. Trees
+
+Checks: 
+1. Subplot = 1 
+2. Quarter = 1, 2, 3, or 4
+3. Correct Plot Area
+4. Correct Snag Plot Area
+5. Correct Break Pt. Diameter
+6. Species is appropriate (flags for outliers)
+7. Outlier values flagged for Char Height, Scorch Height, Scorch Percent
+
+
+
+
+
+```{r}
+
+# QAQC Checks
+
+# 1. Subplot = 1 
+values_data <- trees_df$Subplot.Frac.
+valid_values <- 1
+values_check <- values_data %in% valid_values
+errors_Trees <- qaqc(
+  trees_df,
+  "Subplot Fraction",
+  "Subplot must be 1",
+  values_check,
+  values_data = values_data
+)
+
+# 2. Quarter = 1, 2, 3, 4
+values_data <- trees_df$Quarter
+valid_values <- c(1, 2, 3, 4)
+values_check <- values_data %in% valid_values
+errors_Trees <- rbind(errors_Trees,
+  qaqc(
+    trees_df,
+    "Tree Quarter",
+    "Quarter must be 1-4",
+    values_check,
+    values_data = values_data
+  )
+)
+
+# 3. Plot Area
+values_data <- trees_headers$Plot.Area
+values_check <- values_data == 0.032
+errors_Trees <- rbind(errors_Trees,
+  qaqc(
+    trees_headers,
+    "Tree Plot Area",
+    "Plot Area must be 0.032",
+    values_check,
+    values_data = values_data
+  )
+)
+
+
+# 4. Snag Plot Area
+values_data <- trees_headers$Snag.Plot.Area
+values_check <- values_data == 0.032
+errors_Trees <- rbind(errors_Trees,
+  qaqc(
+    trees_headers,
+    "Snag Plot Area",
+    "Snag Plot Area must be 0.032",
+    values_check,
+    values_data = values_data
+  )
+)
+
+# 5. Break Point Diameter
+values_data <- trees_headers$Break.Pnt..Dia.
+values_check <- values_data == 15
+errors_Trees <- rbind(errors_Trees,
+  qaqc(
+    trees_headers,
+    "Tree Break Point Diameter",
+    "Break Point Diameter must be 15",
+    values_check,
+    values_data = values_data
+  )
+)
+
+
+# 6. Reasonable tree species
+
+species_freq <- table(trees_df$Species)
+rare_species <- names(species_freq[species_freq < 5])
+
+outliers_species <- trees_df$Species %in% rare_species
+values_check <- !outliers_species
+values_data <- ifelse(outliers_species, paste0("Outlier Species: ", trees_df$Species), NA)
+
+errors_Trees <- rbind(
+  errors_Trees,
+  qaqc(trees_df, "Species Outliers", "Rare species (frequency < 5)", values_check, values_data)
+)
+
+
+# 7. Outlier detection for Char Height, Scorch Height, and Scorch %
+
+detect_outliers_zscore <- function(x) {
+  z <- (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
+  abs(z) > 3
+}
+
+# Char Height
+outliers_char <- detect_outliers_zscore(trees_df$Char.Ht.)
+values_check <- !outliers_char
+values_data <- ifelse(outliers_char, paste0("Outlier Char: ", trees_df$Char.Ht.), NA)
+errors_Trees <- rbind(errors_Trees,
+  qaqc(trees_df, "Char Ht Outliers", "Char Ht outlier (z-score)", values_check, values_data)
+)
+
+
+# Scorch Height
+outliers_SH <- detect_outliers_zscore(trees_df$Scorch.Ht.)
+values_check <- !outliers_SH
+values_data <- ifelse(outliers_SH, paste0("Outlier SH: ", trees_df$Scorch.Ht.), NA)
+errors_Trees <- rbind(errors_Trees,
+  qaqc(trees_df, "Scorch Ht Outliers", "Scorch Ht outlier (z-score)", values_check, values_data)
+)
+
+
+# Scorch Percent
+outliers_SP <- detect_outliers_zscore(trees_df$Crown.Scorch..)
+values_check <- !outliers_SP
+values_data <- ifelse(outliers_SP, paste0("Outlier SP: ", trees_df$Crown.Scorch..), NA)
+errors_Trees <- rbind(errors_Trees,
+  qaqc(trees_df, "Scorch % Outliers", "Scorch % outlier (z-score)", values_check, values_data)
+)
+
+
+
+
+
+
+```
+
+
+##5. Post Burn Severity
+
+
+Checks: 
+1. # of transects = 2
+2. Transect length = 65.6
+3. Points per transect = 10
+4. Each transect has 10 rows of data
+5&6. Reasonable burn severity
+
+```{r}
+
+# QAQC Checks 
+
+# 1. Number of Transects = 2
+errors_BS <- bind_rows(errors_BS,
+  check_qaqc(
+    data = BS_headers,
+    query = "BS NumTran",
+    message = "Number of Transects",
+    condition = BS_headers$Num..Transects == 2
+  )
+)
+
+
+# 2. Transect Length = 65.6 
+values_check <- with(BS_headers,
+  BS_headers$Tran..Length == 65.6)
+
+values_data <- BS_headers$Tran..Length
+
+errors_FuelsFine <- bind_rows(errors_BS,
+  check_qaqc(
+    data = BS_headers,
+    query = "BS TranLen",
+    message = "Invalid Transect Lengths",
+    condition = values_check,
+    values_data = values_data
+  )
+)
+
+# 3. Points per transect = 10
+values_data <- BS_headers$Num..Pts..Tran.
+values_valid <- 10
+values_check <- values_data == values_valid
+errors_BS <- rbind(errors_BS, qaqc(BS_headers, "BS pts per transect", BS_headers$Num..Pts..Tran., values_check))
+
+# 4. Each transect has 10 rows of data
+BS_df <- BS_df %>% group_by(MacroPlot.Name, Sample.Event.Date, Transect) %>% mutate(Nrows = n()) %>% ungroup()
+values_data <- BS_df$Nrows
+values_valid <- 10
+values_check <- values_valid == values_data
+errors_BS <- rbind(errors_BS, qaqc(BS_df, "BS Nrows", "number of rows", values_check))
+
+
+# 5. Reasonable code for substrate burn severity
+values_data <- BS_df$Substrate
+values_valid <- c(0, 2, 3, 4, 5)
+values_check <- values_data %in% values_valid
+errors_BS <- rbind(errors_BS, qaqc(BS_df, "Substrate BS", "Reasonable BS", values_check))
+
+# 6. Reasonable code for vegetation burn severity
+values_data <- BS_df$Vegetation
+values_valid <- c(0, 2, 3, 4, 5)
+values_check <- values_data %in% values_valid
+errors_BS <- rbind(errors_BS, qaqc(BS_df, "Vegetation BS", "Reasonable BS", values_check))
+
+
+
+
+```
+
+
+
+
+## Step 8. Combine error logs and save as .xslx
+
+```{r}
+errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_BS)
+errors_ALL <- unique(errors_ALL)
+
+write_xlsx(errors_ALL,"Error Logs/FALL_25_RX_00PRE.xlsx")
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
