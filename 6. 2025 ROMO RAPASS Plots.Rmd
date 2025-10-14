@@ -573,20 +573,6 @@ errors_Trees <- rbind(
 )
 
 
-# 4b. Species = PIPO
-values_data <- trees_df$Species
-values_check <- values_data %in% c("PICO", "PIEN", "ABLA")
-errors_Trees <- rbind(errors_Trees,
-  qaqc(
-    trees_df,
-    "Tree Species",
-    "Species must be one of list",
-    values_check,
-    values_data = values_data
-  )
-)
-
-
 
 # 7. Crown Class logic 
 values_check <- case_when(
