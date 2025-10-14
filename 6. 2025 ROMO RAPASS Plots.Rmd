@@ -16,6 +16,8 @@ Summary: QAQC code for
   # 1. 2024 Fall RX 01yr01 reads (RAP_01, RAP_02, RAP_03, RAP_04, RAP_06, RAP_09, RAP_10) 
   # 2. 2025 Spring 01yr01 reads (RAP_13, RAP_14, RAP_15, RAP_16, PIPS_16, PIPS_08)
   # 3. Pre reads for fall 2025 RX (PIPS_01, PIPS_02, PIPS_05, PIPO_09, PIPO_27, PIPS_14)
+  # 4. Thunder MOuntain Plots
+  # 5. West Side RAP plots from 2025
   
   ***Note: edit filepath for (2) load data, and fuel constant for fuels queries, and tree species!
   
@@ -107,6 +109,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 directory_path <- "FFI Data - WORKING/2025_Spring2025RX_01yr01/New folder/"
+directory_path <- "FFI Data - Working/2025_PICO/"
 
 # load data (Surface Fuels - Fine)
 fuelsfine_df <- load_data(directory_path, "_Surface Fuels - Fine.csv$")
@@ -195,13 +198,13 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
 
 
 
-# 3. Fuel Constant = "Ponderosa pine"
+# 3. Fuel Constant = "Default"
 errors_FuelsFine <- bind_rows(errors_FuelsFine,
   check_qaqc(
     fuelsfine_df,
     "Fuel Fine FuelConst",
     "Fuel Constant",
-    fuelsfine_df$FWDFuConSt == "Ponderosa pine"
+    fuelsfine_df$FWDFuConSt == "Default"
   )
 )
 
@@ -331,7 +334,7 @@ errors_Fuels1000 <- rbind(errors_Fuels1000,
 
 # 3. Check Fuel Constant
 values_data <- fuels1000_df$CWDFuConSt
-values_valid <- "Ponderosa pine"
+values_valid <- "Default"
 values_check <- values_data == values_valid
 errors_Fuels1000 <- rbind(errors_Fuels1000, 
                          qaqc(fuels1000_df, 
@@ -420,7 +423,7 @@ errors_FuelsDL <- rbind(errors_FuelsDL,
 
 # 4. Correct DL Fuel Constant
 values_data <- fuelsDL_df$DLFuConSt
-values_valid <- "Ponderosa pine"
+values_valid <- "Default"
 values_check <- values_data == values_valid
 errors_FuelsDL <- rbind(errors_FuelsDL,
                        qaqc(fuelsDL_df, 
@@ -469,29 +472,31 @@ errors_FuelsDL <- rbind(errors_FuelsDL,
 ##4. Trees
 
 Checks: 
-1. Subplot = 1 or 2
+1. Subplot = 1 
 2. Quarter = 1, 2, 3, or 4
-3. Subplot 1 if DBH >= 15; subplot 2 if DBH < 15
-4. Species is apropriate
-5. Outlier values flagged for DBH, height, CBH
-6. Correct Crown Class 
-7. Correct damage code
-8. Correct Plot Area
-9. Correct Snag Plot Area
-10. Correct Break Pt. Diameter
+3. Correct Plot Area
+4. Correct Snag Plot Area
+5. Correct Break Pt. Diameter
+6. Species is appropriate (flags for outliers)
+7. Correct Crown Class 
+8. Outlier values flagged for DBH, height, CBH
+9. Reasonable damage code
+
+
+
 
 ```{r}
 
 # QAQC Checks
 
-# 1. Subplot = 1 or 2
+# 1. Subplot = 1 
 values_data <- trees_df$Subplot.Frac.
-valid_values <- c(1, 2)
+valid_values <- 1
 values_check <- values_data %in% valid_values
 errors_Trees <- qaqc(
   trees_df,
   "Subplot Fraction",
-  "Subplot must be 1 or 2",
+  "Subplot must be 1",
   values_check,
   values_data = values_data
 )
@@ -510,53 +515,63 @@ errors_Trees <- rbind(errors_Trees,
   )
 )
 
-# 3. Subplot 1 if DBH >= 15; subplot 2 if DBH < 15
-values_check <- case_when(
-  is.na(trees_df$DBH) | is.na(trees_df$Subplot.Frac.) ~ FALSE,
-  trees_df$DBH >= 15 & trees_df$Subplot.Frac. == 1 ~ TRUE,
-  trees_df$DBH < 15 & trees_df$Subplot.Frac. == 2 ~ TRUE,
-  TRUE ~ FALSE
-)
-values_data <- paste0("DBH: ", trees_df$DBH, ", Subplot: ", trees_df$Subplot.Frac.)
+# 3. Plot Area
+values_data <- trees_headers$Plot.Area
+values_check <- values_data == 0.032
 errors_Trees <- rbind(errors_Trees,
   qaqc(
-    trees_df,
-    "Tree Subplot Logic",
-    "DBH/Subplot mismatch",
+    trees_headers,
+    "Tree Plot Area",
+    "Plot Area must be 0.032",
     values_check,
     values_data = values_data
   )
 )
 
-# 4a. Species = PIPO
-values_data <- trees_df$Species
-values_check <- values_data == "PIPO"
+# 4. Snag Plot Area
+values_data <- trees_headers$Snag.Plot.Area
+values_check <- values_data == 0.032
 errors_Trees <- rbind(errors_Trees,
   qaqc(
-    trees_df,
-    "Tree Species",
-    "Species must be PIPO",
+    trees_headers,
+    "Snag Plot Area",
+    "Snag Plot Area must be 0.032",
     values_check,
     values_data = values_data
   )
 )
 
-# 4b. Species = PIPO
-#values_data <- trees_df$Species
-#values_check <- values_data %in% c("PICO", "PIEN", "ABLA")
-#errors_Trees <- rbind(errors_Trees,
-  #qaqc(
-    #trees_df,
-    #"Tree Species",
-    #"Species must be one of list",
-    #values_check,
-    #values_data = values_data
-  #)
-#)
+# 5. Break Point Diameter
+values_data <- trees_headers$Break.Pnt..Dia.
+values_check <- values_data == 15
+errors_Trees <- rbind(errors_Trees,
+  qaqc(
+    trees_headers,
+    "Tree Break Point Diameter",
+    "Break Point Diameter must be 15",
+    values_check,
+    values_data = values_data
+  )
+)
+
+
+# 6. Reasonable tree species
+
+species_freq <- table(trees_df$Species)
+rare_species <- names(species_freq[species_freq < 5])
+
+outliers_species <- trees_df$Species %in% rare_species
+values_check <- !outliers_species
+values_data <- ifelse(outliers_species, paste0("Outlier Species: ", trees_df$Species), NA)
+
+errors_Trees <- rbind(
+  errors_Trees,
+  qaqc(trees_df, "Species Outliers", "Rare species (frequency < 5)", values_check, values_data)
+)
 
 
 
-# 5. Crown Class logic 
+# 7. Crown Class logic 
 values_check <- case_when(
   trees_df$Status == "D" & trees_df$Crown.Class %in% c("BAD", "BBD", "CS", "LBS", "RS", "DD") ~ TRUE,
   trees_df$Status == "L" & trees_df$Crown.Class %in% c("I", "O", "SC", "D", "C") ~ TRUE,
@@ -576,48 +591,7 @@ errors_Trees <- rbind(
   )
 )
 
-
-
-# 6. Plot Area
-values_data <- trees_headers$Plot.Area
-values_check <- values_data == 0.032
-errors_Trees <- rbind(errors_Trees,
-  qaqc(
-    trees_headers,
-    "Tree Plot Area",
-    "Plot Area must be 0.032",
-    values_check,
-    values_data = values_data
-  )
-)
-
-# 7. Snag Plot Area
-values_data <- trees_headers$Snag.Plot.Area
-values_check <- values_data == 0.032
-errors_Trees <- rbind(errors_Trees,
-  qaqc(
-    trees_headers,
-    "Snag Plot Area",
-    "Snag Plot Area must be 0.032",
-    values_check,
-    values_data = values_data
-  )
-)
-
-# 8. Break Point Diameter
-values_data <- trees_headers$Break.Pnt..Dia.
-values_check <- values_data == 15
-errors_Trees <- rbind(errors_Trees,
-  qaqc(
-    trees_headers,
-    "Tree Break Point Diameter",
-    "Break Point Diameter must be 15",
-    values_check,
-    values_data = values_data
-  )
-)
-
-# 9. Outlier detection for DBH, Char Height, Scorch Height, Scorch %, Height
+# 8. Outlier detection for DBH, CBH, Height
 
 detect_outliers_zscore <- function(x) {
   z <- (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
@@ -633,13 +607,49 @@ errors_Trees <- rbind(errors_Trees,
 )
 
 
-
 # Height
 outliers_height <- detect_outliers_zscore(trees_df$Height)
 values_check <- !outliers_height
 values_data <- ifelse(outliers_height, paste0("Outlier Height: ", trees_df$Height), NA)
 errors_Trees <- rbind(errors_Trees,
   qaqc(trees_df, "Height Outliers", "Height outlier (z-score)", values_check, values_data)
+)
+
+#CBH
+outliers_cbh <- detect_outliers_zscore(trees_df$Live.Crown.Base.Ht.)
+values_check <- !outliers_cbh
+values_data <- ifelse(outliers_cbh, paste0("Outlier CBH: ", trees_df$Live.Crown.Base.Ht.), NA)
+errors_Trees <- rbind(errors_Trees,
+  qaqc(trees_df, "CBH Outliers", "CBH outlier (z-score)", values_check, values_data)
+)
+
+
+# 9. Reasonable Damage code (Check for outliers)
+
+all_damages <- unlist(trees_df[, c("Damage.1", "Damage.2", "Damage.3", "Damage.4", "Damage.5")])
+all_damages <- all_damages[!is.na(all_damages)]
+damage_freq <- table(all_damages)
+rare_damages <- names(damage_freq[damage_freq < 2])
+
+damage_cols <- c("Damage.1", "Damage.2", "Damage.3", "Damage.4", "Damage.5")
+outliers_damage <- apply(trees_df[, damage_cols], 1, function(row) {
+  any(row %in% rare_damages, na.rm = TRUE)
+})
+
+values_data <- apply(trees_df[, damage_cols], 1, function(row) {
+  rare_found <- row[row %in% rare_damages]
+  if (length(rare_found) > 0) {
+    paste("Outlier Damage Code(s):", paste(unique(rare_found), collapse = ", "))
+  } else {
+    NA
+  }
+})
+
+values_check <- !outliers_damage
+
+errors_Trees <- rbind(
+  errors_Trees,
+  qaqc(trees_df, "Damage Code Outliers", "Rare damage codes (frequency < 2)", values_check, values_data)
 )
 
 
@@ -784,7 +794,7 @@ errors_cover <- bind_rows(errors_cover, qaqc(
 5. Quad Area = 78.5
 6. Transect = 1
 7. Quadrat = 1, 2, 3, or 4
-8. Status = L
+8. Status = L or D
 9. Height = 0.15, 0.3, 0.6, 1, 2, 3, 4
 
 ```{r}
@@ -866,13 +876,14 @@ errors_seedlings <- bind_rows(errors_seedlings, qaqc(
   values_data = values_data
 ))
 
-# 8. Status = L
+# 8. Status = L or D
 values_data <- seedling_df$Status
-values_check <- values_data == "L"
+valid_values <- c("L", "D")
+values_check <- values_data %in% valid_values
 errors_seedlings <- bind_rows(errors_seedlings, qaqc(
   data = seedling_df,
   query = "Seedling Status",
-  query_message = "Status must be 'L'",
+  query_message = "Status must be L or D",
   values_check = values_check,
   values_data = values_data
 ))
@@ -904,8 +915,7 @@ Checks:
 7. Transect = 1 or 2
 8. Age Class = I, M, or R
 9. Status = L or D
-10. Count = 1-60
-11. Species = CEFE, PUTR2, CEVE, RICE, RUID, BERBE, CHVIL4
+10. Species = CEFE, PUTR2, CEVE, RICE, RUID, BERBE, CHVIL4
 
 ```{r}
 
@@ -978,14 +988,8 @@ errors_shrubs <- bind_rows(errors_shrubs, qaqc(
   shrub_df, "Shrub Status", "Status must be L or D", values_check, values_data
 ))
 
-# 10. Count = 0–60
-values_data <- shrub_df$Count
-values_check <- values_data %in% 0:60
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_df, "Shrub Count", "Count must be 0–60", values_check, values_data
-))
 
-# 11. Species = Approved codes
+# 10. Species = Approved codes
 values_data <- shrub_df$Item.Code
 valid_species <- c("CEFE", "CEVE", "PUTR2", "RICE", "RUID", "BERBE", "CHVIL4", "ROWO")
 values_check <- values_data %in% valid_species

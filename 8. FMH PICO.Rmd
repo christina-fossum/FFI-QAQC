@@ -1,5 +1,5 @@
 ---
-title: "7. West Side RAPASS"
+title: "FMH PICO"
 author: "Christina Fossum"
 date: "2025-10-08"
 output: html_document
@@ -8,13 +8,12 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 Date: 09/15/2025
 Edited by: Christina Fossum
 
-Summary: QAQC code for Westside RAPASS PICO plots (2025)
-  
-  ***Note: edit filepath for (2) load data, and fuel constant for fuels queries, and tree species!
-  
+Summary: QAQC code for original FMH PICO plots                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+
 Contents / Steps:
 1. Load packages and functions
 2. Load data
@@ -102,7 +101,7 @@ load_data <- function(directory_path, pattern) {
 #Set Working Directory to QAQC Folder: Session -> Set Working Directory -> Choose Directory
 
 # Set "directory_path" to source file location
-directory_path <- "FFI Data - WORKING/2025_PICO/"
+directory_path <- "FFI Data - WORKING/2025_Spring2025RX_01yr01/New folder/"
 
 # load data (Surface Fuels - Fine)
 fuelsfine_df <- load_data(directory_path, "_Surface Fuels - Fine.csv$")
@@ -144,11 +143,11 @@ shrub_headers <- load_headers(directory_path, "_Density - Belts \\(metric\\)\\.c
 
 #3A. Fine Fuel
 Checks:
-1. Number of Transects = 2 
-2. Transect Length = 65.6 for 1hr, 10hr, 100hr
+1. Number of Transects = 4 
+2. Transect Length = 6, 6, 12 for 1hr, 10hr, 100hr
 3. FWD fuel constant = correct
-4. Azimuth is 0 for Transect 1, 270 for transect 2
-5. 2x transect data per plot
+4. Azimuth is reasonable
+5. 4x transect data per plot
 6. Outlier values flagged for 1hr, 10hr, 100hr fuel counts
 
 ```{r}
@@ -158,21 +157,21 @@ check_qaqc <- function(data, query, message, condition, values_data = NULL, Comm
   qaqc(data, query, message, condition, values_data = values_data, Comment = Comment)
 }
 
-# 1. Number of Transects = 2
+# 1. Number of Transects = 4
 errors_FuelsFine <- bind_rows(errors_FuelsFine,
   check_qaqc(
     data = fuelsfine_headers,
     query = "Fine Fuels NumTran",
     message = "Number of Transects",
-    condition = fuelsfine_headers$Num..Transects == 2
+    condition = fuelsfine_headers$Num..Transects == 4
   )
 )
 
-# 2. Transect Length = 65.6 for all
+# 2. Transect Length = 6, 6, 12
 values_check <- with(fuelsfine_headers,
-  X1.hr.Tran..Len. == 65.6 &
-  X10.hr.Tran..Len. == 65.6 &
-  X100.hr.Tran..Len. == 65.6
+  X1.hr.Tran..Len. == 6 &
+  X10.hr.Tran..Len. == 6 &
+  X100.hr.Tran..Len. == 12
 )
 
 values_data <- with(fuelsfine_headers, 
@@ -191,31 +190,30 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
 
 
 
-# 3. Fuel Constant = "Ponderosa pine"
+# 3. Fuel Constant = "Default"
 errors_FuelsFine <- bind_rows(errors_FuelsFine,
   check_qaqc(
     fuelsfine_df,
     "Fuel Fine FuelConst",
     "Fuel Constant",
-    fuelsfine_df$FWDFuConSt == "Ponderosa pine"
+    fuelsfine_df$FWDFuConSt == "Default"
   )
 )
 
-# 4. Azimuth Check
-azimuth_check <- with(fuelsfine_df,
-  (Transect == 1 & Azimuth == 0) |
-  (Transect == 2 & Azimuth == 270)
-)
+# 2. Azimuth Check
+azimuth_range_check <- fuelsfine_df$Azimuth %in% 0:359
+
 errors_FuelsFine <- bind_rows(errors_FuelsFine,
   check_qaqc(
     fuelsfine_df,
     "Fine Fuel Azimuth",
-    "Correct Azimuth",
-    azimuth_check
+    "Azimuth value not in range 0–359",
+    azimuth_range_check
   )
 )
 
-# 5. Hits Check: Ensure 2 hits per plot
+
+# 5. Hits Check: Ensure 4 hits per plot
 fuelsfine_df <- fuelsfine_df %>%
   mutate(hits = 1) %>%
   group_by(MacroPlot.Name, Sample.Event.Date) %>%
@@ -227,7 +225,7 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
     fuelsfine_df,
     "Fuel Fine Hits",
     "Number of Hits",
-    fuelsfine_df$sumhits == 2
+    fuelsfine_df$sumhits == 4
   )
 )
 
@@ -1003,9 +1001,6 @@ write_xlsx(errors_ALL,"Error Logs/2025_2025SpringRX.xlsx")
 
 
 ```
-
-
-
 
 
 
