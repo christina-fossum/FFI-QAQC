@@ -103,7 +103,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/2025 FALL RX 00PRE/"
+directory_path <- "FFI data - WORKING/2025 Front Country RX_PostBurn - 7/"
 
 
 # load data (Surface Fuels - Fine)
