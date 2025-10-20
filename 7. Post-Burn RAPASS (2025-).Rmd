@@ -103,7 +103,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/2025 Front Country RX_PostBurn - 7/"
+directory_path <- "FFI data - WORKING/2025Spring_PostBurn//"
 
 
 # load data (Surface Fuels - Fine)
@@ -609,17 +609,16 @@ Checks:
 
 ```{r}
 
+
 # QAQC Checks 
 
 # 1. Number of Transects = 2
-errors_BS <- bind_rows(errors_BS,
-  check_qaqc(
-    data = BS_headers,
-    query = "BS NumTran",
-    message = "Number of Transects",
-    condition = BS_headers$Num..Transects == 2
-  )
-)
+values_data <- BS_headers$Num..Transects
+values_valid <- 2
+values_check <- values_data == values_valid
+errors_BS <- qaqc(BS_headers, "BS NumTran", "Number of Transects", values_check, values_data = values_data)
+
+
 
 
 # 2. Transect Length = 65.6 
@@ -678,7 +677,7 @@ errors_BS <- rbind(errors_BS, qaqc(BS_df, "Vegetation BS", "Reasonable BS", valu
 errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_BS)
 errors_ALL <- unique(errors_ALL)
 
-write_xlsx(errors_ALL,"Error Logs/FALL_25_RX_00PRE.xlsx")
+write_xlsx(errors_ALL,"Error Logs/Spring2025_PostBurn.xlsx")
 
 
 ```
