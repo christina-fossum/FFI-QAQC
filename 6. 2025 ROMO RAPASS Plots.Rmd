@@ -356,23 +356,42 @@ errors_Fuels1000 <- rbind(errors_Fuels1000,
                               values_check,
                               values_data = values_data))
 
-# 5. Outliers flagged for Diameter
 
-# Re-using your detect_outliers_zscore function
-outliers_z <- detect_outliers_zscore(fuels1000_df$Diameter)
-values_check_z <- !outliers_z
+#5. Outliers flagged for diameter
 
-# For error messages, show the actual diameter values where outliers flagged
-values_data_z <- ifelse(outliers_z, 
-                        paste0("Outlier Diameter: ", fuels1000_df$Diameter), 
+# --- 1. Define robust outlier detection (you can swap for z-score if preferred) ---
+detect_outliers_robust <- function(x, threshold = 3.5) {
+  med <- median(x, na.rm = TRUE)
+  mad_val <- mad(x, constant = 1, na.rm = TRUE)
+  z_mod <- 0.6745 * (x - med) / mad_val
+  is_outlier <- !is.na(z_mod) & abs(z_mod) > threshold
+  return(is_outlier)
+}
+
+# --- 2. Apply to your Diameter field ---
+outliers_z <- detect_outliers_robust(fuels1000_df$Diameter)
+
+# values_check_z: TRUE means this row *failed* (is an outlier)
+values_check_z <- outliers_z
+
+# For error messages, store the offending values only
+values_data_z <- ifelse(outliers_z,
+                        paste0("Outlier Diameter: ", fuels1000_df$Diameter),
                         NA_character_)
 
-errors_Fuels1000 <- rbind(errors_Fuels1000, 
-                         qaqc(fuels1000_df, 
-                              "x1000 Dia value", 
-                              "Diameter Outlier (Z-score)", 
-                              values_check_z,
-                              values_data = values_data_z))
+# --- 3. Append to the errors_Fuels1000 log ---
+errors_Fuels1000 <- rbind(
+  errors_Fuels1000,
+  qaqc(
+    fuels1000_df,
+    check_name   = "x1000 Dia value",
+    check_type   = "Diameter Outlier (Modified Z-score)",
+    values_check = values_check_z,
+    values_data  = values_data_z
+  )
+)
+
+
 ```
 
 #3C. Litter/Duff
