@@ -103,7 +103,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/2025Spring_PostBurn//"
+directory_path <- "FFI data - WORKING/Fall25_POST/"
 
 
 # load data (Surface Fuels - Fine)
@@ -677,7 +677,7 @@ errors_BS <- rbind(errors_BS, qaqc(BS_df, "Vegetation BS", "Reasonable BS", valu
 errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_BS)
 errors_ALL <- unique(errors_ALL)
 
-write_xlsx(errors_ALL,"Error Logs/Spring2025_PostBurn.xlsx")
+write_xlsx(errors_ALL,"Error Logs/Fall2025_PostBurn.xlsx")
 
 
 ```
