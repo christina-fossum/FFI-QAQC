@@ -1,5 +1,4 @@
 # FFI-QAQC
-aline test
 Rocky Mountain National Park Fire Effects
 Automated process for conducting QA/QC of FFI data in R
 
@@ -48,7 +47,7 @@ Setting up GitHub & R
 
 (4) Configure Git with GitHub account
 - Within Git Bash, type the following commands:
-  1. 'git config --global username christina-fossum' (your GitHub user name)
+  1. 'git config --global user.name christina-fossum' (your GitHub user name)
   2. 'git config --global user.email christina_fossum@nps.gov' (your account email address)
 - Check that now git knows your username and email:
   1. 'git config --global --list'
@@ -74,7 +73,7 @@ Setting up GitHub & R
   4. Modify "Create Project as a Sub-directory" field to desktop
 - Make minor edit to README file and posh to GitHub to make sure working
   1. Open README file from within R studio
-  2. Add some line of new text to top of doc
+  2. Add some line of new text to top of doc and save
   3. In upper right-hand corner, select 'Git' pane and check box next to the README.md doc
   4. Click 'Commit Pending Changes' -> type brief commit message -> Click 'commit' -> 'push'
 
