@@ -1,7 +1,7 @@
 ---
-title: "6. ROMO RAPASS 2025"
+title: "10. 2026 Post-Thin"
 author: "Christina Fossum"
-date: "2025-09-15"
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
@@ -9,17 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Date: 09/15/2025
+Date: 9/02/2026
 Edited by: Christina Fossum
 
-**test
-Summary: QAQC code for 
-  # 1. 2024 Fall RX 01yr01 reads (RAP_01, RAP_02, RAP_03, RAP_04, RAP_06, RAP_09, RAP_10) 
-  # 2. 2025 Spring 01yr01 reads (RAP_13, RAP_14, RAP_15, RAP_16, PIPS_16, PIPS_08)
-  # 3. Pre reads for fall 2025 RX (PIPS_01, PIPS_02, PIPS_05, PIPO_09, PIPO_27, PIPS_14)
-  # 4. Thunder MOuntain Plots
-  # 5. West Side RAP plots from 2025
-  
+Code for post-thin plots (Thunder Mountain, Lily Lake, Deer Mountain)
+
+ 
   ***Note: edit filepath for (2) load data, and fuel constant for fuels queries, and tree species!
   
 Contents / Steps:
@@ -110,7 +105,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/2025 FALL RX 00PRE/"
+directory_path <- "FFI data - WORKING/TM_ffi/"
 
 
 # load data (Surface Fuels - Fine)
@@ -132,18 +127,9 @@ list <- list.files(path = directory_path, pattern = "_Trees - Individuals \\(met
 trees_headers <- lapply(list, function(file) read.csv(file, nrows = 1))
 trees_headers <- do.call(rbind, trees_headers)
 
-# load data (Cover - Points)
-cover_df <- load_data(directory_path, "_Cover - Points \\(metric\\)\\.csv$")
-cover_headers <-load_headers(directory_path, "_Cover - Points \\(metric\\)\\.csv$")
-
-
-# load data (Seedlings)
-seedling_df <- load_data(directory_path, "_Density - Quadrats \\(metric\\)\\.csv$")
-seedling_headers <-load_headers(directory_path, "_Density - Quadrats \\(metric\\)\\.csv$")
-
-# Load data (shrubs)
-shrub_df <- load_data(directory_path, "_Density - Belts \\(metric\\)\\.csv$")
-shrub_headers <- load_headers(directory_path, "_Density - Belts \\(metric\\)\\.csv$")
+# load data (Surface Fuels - Piles (metric))
+piles_df <- load_data(directory_path, "_Surface Fuels - Piles \\(metric\\)\\.csv$")
+piles_headers <- load_headers(directory_path, "_Surface Fuels - Piles \\(metric\\)\\.csv$")
 
 
 ```
@@ -154,11 +140,12 @@ shrub_headers <- load_headers(directory_path, "_Density - Belts \\(metric\\)\\.c
 #3A. Fine Fuel
 Checks:
 1. Number of Transects = 2 
-2. Transect Length = 65.6 for 1hr, 10hr, 100hr
-3. FWD fuel constant = correct
+2. Transect Length = 16.4 for 1hr, 10hr, 32.8 for 100hr
+3. FWD fuel constant = correct (default)
 4. Azimuth is 0 for Transect 1, 270 for transect 2
-5. 2x transect data per plot
-6. Outlier values flagged for 1hr, 10hr, 100hr fuel counts
+5. Slope check
+6. 2x transect data per plot
+7. Outlier values flagged for 1hr, 10hr, 100hr fuel counts
 
 ```{r}
 errors_FuelsFine <- tibble()
@@ -177,11 +164,11 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
   )
 )
 
-# 2. Transect Length = 65.6 for all
+# 2. Transect Length 
 values_check <- with(fuelsfine_headers,
-  X1.hr.Tran..Len. == 65.6 &
-  X10.hr.Tran..Len. == 65.6 &
-  X100.hr.Tran..Len. == 65.6
+  X1.hr.Tran..Len. == 16.4 &
+  X10.hr.Tran..Len. == 16.4 &
+  X100.hr.Tran..Len. == 32.8
 )
 
 values_data <- with(fuelsfine_headers, 
@@ -224,7 +211,23 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
   )
 )
 
-# 5. Hits Check: Ensure 2 hits per plot
+
+# 5. Slope check
+slope_check <- with(fuelsfine_df,
+  (Slope %in% c(0:45))
+)
+errors_FuelsFine <- bind_rows(errors_FuelsFine,
+  check_qaqc(
+    fuelsfine_df,
+    "Fine Fuel Slope",
+    "Correct Slope",
+    slope_check
+  )
+)
+
+
+
+# 6. Hits Check: Ensure 2 hits per plot
 fuelsfine_df <- fuelsfine_df %>%
   mutate(hits = 1) %>%
   group_by(MacroPlot.Name, Sample.Event.Date) %>%
@@ -240,7 +243,7 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
   )
 )
 
-# 6. Z-score Outlier Checks (for 1hr, 10hr, 100hr)
+# 7. Z-score Outlier Checks (for 1hr, 10hr, 100hr)
 detect_outliers_zscore <- function(x) {
   z <- (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
   !is.na(z) & abs(z) <= 3  # TRUE means "not an outlier"
@@ -309,7 +312,8 @@ Checks:
 2. Transect length = 65.6
 3. Correct CWD Fuel Constant
 4. Decay Class is either 3 or 4
-5. Outliers flagged for diameter
+5. Slope check
+6. Outliers flagged for diameter
 
 ```{r}
 
@@ -356,8 +360,23 @@ errors_Fuels1000 <- rbind(errors_Fuels1000,
                               values_check,
                               values_data = values_data))
 
+#5. Slope Check
 
-#5. Outliers flagged for diameter
+slope_check <- with(fuels1000_df,
+  (Slope %in% c(0:45))
+)
+errors_Fuels1000 <- bind_rows(errors_Fuels1000,
+  check_qaqc(
+    fuels1000_df,
+    "1000hr Slope",
+    "Correct Slope",
+    slope_check
+  )
+)
+
+
+
+#6. Outliers flagged for diameter
 
 # --- 1. Define robust outlier detection (you can swap for z-score if preferred) ---
 detect_outliers_robust <- function(x, threshold = 3.5) {
@@ -679,345 +698,141 @@ errors_Trees <- rbind(
 
 ```
 
-
-##5. Cover
+##5. Piles
 
 Checks: 
-1. # of transects = 2
-2. Transect Length = 20m
-3. Points per transect = 20
-4. 'Point' = 'Tape' 
-5. NumPts = 20
-6. 1st hit has height value only if a plant (no other height values)
-7. Outlier values flagged for plant height
-8. Outlier values flagged for cover species
+1. PIle Count = 1
+2. Pile Type = Hand
+3. Pile Comp = Conifer
+4. Pile Shape = HE OR PA
+5. Width 1, Length 1, Height 1 are reasonable
+6. Width 2, Length 2, Height 2 are blank
+7. Pack Ratio is reasonable
+8. Spec. Gravity is reasonable
+9. Sample Area = 0.032
 
-```{r}
-
-# QAQC Checks 
-
-# 1. Number of Transects = 2
-values_data <- cover_headers$Num..Transects
-values_check <- values_data == 2
-errors_cover <- qaqc(
-  data = cover_headers,
-  query = "Cover NumTran",
-  query_message = "Number of Transects",
-  values_check = values_check,
-  values_data = values_data
-)
-
-# 2. Transect Length = 20m
-values_data <- cover_headers$Tran..Length
-values_check <- values_data == 20
-errors_cover <- bind_rows(errors_cover, qaqc(
-  data = cover_headers,
-  query = "Cover Tran Length",
-  query_message = "Transect Length",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 3. Points per Transect = 20
-values_data <- cover_headers$Num..Pts..Tran.
-values_check <- values_data == 20
-errors_cover <- bind_rows(errors_cover, qaqc(
-  data = cover_headers,
-  query = "Cover Points Per Transect",
-  query_message = "Points per Transect",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 4. Point == Tape
-values_data <- paste0("Point: ", cover_df$Point, " | Tape: ", cover_df$Tape)
-values_check <- cover_df$Point == cover_df$Tape
-errors_cover <- bind_rows(errors_cover, qaqc(
-  data = cover_df,
-  query = "Cover Point/Tape Match",
-  query_message = "Point matches Tape",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 5. Number of unique Points per Transect = 20
-cover_df <- cover_df %>%
-  group_by(MacroPlot.Name, Sample.Event.Date, Transect) %>%
-  mutate(NumPts = n_distinct(Point)) %>%
-  ungroup()
-
-values_data <- cover_df$NumPts
-values_check <- values_data == 20
-errors_cover <- bind_rows(errors_cover, qaqc(
-  data = cover_df,
-  query = "Cover Obs Count",
-  query_message = "Points per Transect = 20",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 6. Height logic: only plant species (on first hit) have height values
-values_check <- case_when(
-  cover_df$Order == 1 & !(cover_df$Species %in% c("LITT1", "WOOD1", "BARE1", "ROCK1")) & !is.na(cover_df$Height) ~ TRUE,
-  cover_df$Order == 1 & (cover_df$Species %in% c("LITT1", "WOOD1", "BARE1", "ROCK1")) & is.na(cover_df$Height) ~ TRUE,
-  cover_df$Order != 1 & is.na(cover_df$Height) ~ TRUE,
-  TRUE ~ FALSE
-)
-
-values_data <- paste0("Order: ", cover_df$Order,
-                      ", Species: ", cover_df$Species,
-                      ", Height: ", cover_df$Height)
-
-errors_cover <- bind_rows(errors_cover, qaqc(
-  data = cover_df,
-  query = "Cover Height Logic",
-  query_message = "Height present only for valid species (order 1)",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 7. Outliers - Height
-outliers_z <- detect_outliers_zscore(cover_df$Height)
-values_check <- !outliers_z
-values_data <- cover_df$Height
-
-errors_cover <- bind_rows(errors_cover, qaqc(
-  data = cover_df,
-  query = "Height Outliers",
-  query_message = "Height outlier (Z-score)",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 8. Species with <2 records flagged
-cover_df <- cover_df %>%
-  group_by(Species) %>%
-  mutate(SpeciesFreq = n()) %>%
-  ungroup()
-
-values_check <- cover_df$SpeciesFreq >= 2
-values_data <- paste0("Species: ", cover_df$Species, ", Freq: ", cover_df$SpeciesFreq)
-
-errors_cover <- bind_rows(errors_cover, qaqc(
-  data = cover_df,
-  query = "Rare Species",
-  query_message = "Species occurs < 2 times",
-  values_check = values_check,
-  values_data = values_data
-))
-```
-
-
-##6. Seedlings
-1. # transects = 1
-2. # quadrats per transect = 4
-3. Quad length = 10
-4. Quad Width = 10
-5. Quad Area = 78.5
-6. Transect = 1
-7. Quadrat = 1, 2, 3, or 4
-8. Status = L or D
-9. Height = 0.15, 0.3, 0.6, 1, 2, 3, 4
-
-```{r}
-
-# 1. Number of Transects = 1
-values_data <- seedling_headers$Num..Transects
-values_check <- values_data == 1
-errors_seedlings <- qaqc(
-  data = seedling_headers,
-  query = "Seedling NumTran",
-  query_message = "Number of Transects",
-  values_check = values_check,
-  values_data = values_data
-)
-
-# 2. Quadrats per Transect = 4
-values_data <- seedling_headers$Num..Quad..Tran.
-values_check <- values_data == 4
-errors_seedlings <- bind_rows(errors_seedlings, qaqc(
-  data = seedling_headers,
-  query = "Seedling QuadPerTran",
-  query_message = "Quadrats per Transect",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 3. Quadrat Length = 10
-values_data <- seedling_headers$Quad..Length
-values_check <- values_data == 10
-errors_seedlings <- bind_rows(errors_seedlings, qaqc(
-  data = seedling_headers,
-  query = "Seedling QuadLength",
-  query_message = "Quadrat Length",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 4. Quadrat Width = 10
-values_data <- seedling_headers$Quad..Width
-values_check <- values_data == 10
-errors_seedlings <- bind_rows(errors_seedlings, qaqc(
-  data = seedling_headers,
-  query = "Seedling QuadWidth",
-  query_message = "Quadrat Width",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 5. Quadrat Area = 78.5
-values_data <- seedling_headers$Quad..Area
-values_check <- values_data == 78.5
-errors_seedlings <- bind_rows(errors_seedlings, qaqc(
-  data = seedling_headers,
-  query = "Seedling QuadArea",
-  query_message = "Quadrat Area",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 6. Transect = 1
-values_data <- seedling_df$Transect
-values_check <- values_data == 1
-errors_seedlings <- bind_rows(errors_seedlings, qaqc(
-  data = seedling_df,
-  query = "Seedling Transect",
-  query_message = "Transect number must be 1",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 7. Quadrat = 1, 2, 3, 4
-values_data <- seedling_df$Quadrat
-values_check <- values_data %in% c(1, 2, 3, 4)
-errors_seedlings <- bind_rows(errors_seedlings, qaqc(
-  data = seedling_df,
-  query = "Seedling Quadrat #",
-  query_message = "Quadrat must be 1–4",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 8. Status = L or D
-values_data <- seedling_df$Status
-valid_values <- c("L", "D")
-values_check <- values_data %in% valid_values
-errors_seedlings <- bind_rows(errors_seedlings, qaqc(
-  data = seedling_df,
-  query = "Seedling Status",
-  query_message = "Status must be L or D",
-  values_check = values_check,
-  values_data = values_data
-))
-
-# 9. Height in valid classes
-values_data <- seedling_df$Height
-valid_values <- c(0.15, 0.3, 0.6, 1, 2, 3, 4)
-values_check <- values_data %in% valid_values
-errors_seedlings <- bind_rows(errors_seedlings, qaqc(
-  data = seedling_df,
-  query = "Seedling Height",
-  query_message = "Height class invalid",
-  values_check = values_check,
-  values_data = values_data
-))
-
-
-```
-
-
-##7. Shrubs 
-Checks:
-1. # of transects = 2
-2. # of sub-belts = 4
-3. Transect length = 20m
-4. Transect Width = 2m
-5. Transect Area = 40m
-6. Sub-belt = 1, 2, 3, 4
-7. Transect = 1 or 2
-8. Age Class = I, M, or R
-9. Status = L or D
-10. Species = CEFE, PUTR2, CEVE, RICE, RUID, BERBE, CHVIL4
 
 ```{r}
 
 # QAQC Checks
 
-# 1. Number of Transects = 2
-values_data <- shrub_headers$Num..Transects
-values_check <- values_data == 2
-errors_shrubs <- qaqc(
-  data = shrub_headers,
-  query = "Shrub NumTran",
-  query_message = "Number of Transects",
-  values_check = values_check,
+# 1. Pile Count = 1 
+values_data <- piles_df$Pile.Count
+valid_values <- 1
+values_check <- values_data %in% valid_values
+errors_piles <- qaqc(
+  piles_df,
+  "Pile Count",
+  "Pile Count is 1",
+  values_check,
   values_data = values_data
 )
 
-# 2. Subbelts per Transect = 4
-values_data <- shrub_headers$Num..Subbelts
-values_check <- values_data == 4
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_headers, "Shrub NumSubbelts", "Subbelts per transect", values_check, values_data
+
+# 2. Pile Type = Hand
+values_data <- piles_df$Pile.Type
+valid_values <- "Hand"
+values_check <- values_data %in% valid_values
+errors_piles <- bind_rows(errors_piles, qaqc(
+  piles_df,
+  "Pile Type",
+  "Pile Type is 'hand'",
+  values_check,
+  values_data = values_data
 ))
 
-# 3. Transect Length = 20m
-values_data <- shrub_headers$Tran..Length
-values_check <- values_data == 20
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_headers, "Shrub TranLength", "Transect Length", values_check, values_data
+# 3. Pile Comp = Conifer
+values_data <- piles_df$Pile.Composition
+valid_values <- "Conifer"
+values_check <- values_data %in% valid_values
+errors_piles <- bind_rows(errors_piles, qaqc(
+  piles_df,
+  "Pile Comp",
+  "Pile composition is 'conifer'",
+  values_check,
+  values_data = values_data
 ))
 
-# 4. Transect Width = 2m
-values_data <- shrub_headers$Tran..Width
-values_check <- values_data == 2
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_headers, "Shrub TranWidth", "Transect Width", values_check, values_data
+# 4. Pile Shape = HE or PA
+values_data <- piles_df$Pile.Shape
+valid_values <- c("HE", "PA")
+values_check <- values_data %in% valid_values
+errors_piles <- bind_rows(errors_piles, qaqc(
+  piles_df,
+  "Pile Shape",
+  "Pile shape is HE or PA",
+  values_check,
+  values_data = values_data
 ))
 
-# 5. Transect Area = 40m²
-values_data <- shrub_headers$Tran..Area
-values_check <- values_data == 40
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_headers, "Shrub TranArea", "Transect Area", values_check, values_data
-))
-
-# 6. Subbelt = 1 to 4
-values_data <- shrub_df$Subbelt
-values_check <- values_data %in% 1:4
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_df, "Shrub Subbelt", "Subbelt must be 1–4", values_check, values_data
-))
-
-# 7. Transect = 1 or 2
-values_data <- shrub_df$Transect
-values_check <- values_data %in% 1:2
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_df, "Shrub Transect", "Transect must be 1 or 2", values_check, values_data
-))
-
-# 8. Age Class = I, M, or R
-values_data <- shrub_df$Age.Class
-values_check <- values_data %in% c("I", "M", "R")
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_df, "Shrub AgeClass", "Age Class must be I, M, or R", values_check, values_data
-))
-
-# 9. Status = L or D
-values_data <- shrub_df$Status
-values_check <- values_data %in% c("L", "D")
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_df, "Shrub Status", "Status must be L or D", values_check, values_data
-))
+# 5. Width, length, height are reasonable
 
 
-# 10. Species = Approved codes
-values_data <- shrub_df$Item.Code
-valid_species <- c("CEFE", "CEVE", "PUTR2", "RICE", "RUID", "BERBE", "CHVIL4", "ROWO")
-values_check <- values_data %in% valid_species
-errors_shrubs <- bind_rows(errors_shrubs, qaqc(
-  shrub_df, "Shrub Species", "Unrecognized Species Code", values_check, values_data
-))
+detect_outliers_zscore <- function(x) {
+  z <- (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
+  abs(z) > 3
+}
+
+# width
+outliers_width <- detect_outliers_zscore(piles_df$Width.1)
+values_check <- !outliers_width
+values_data <- ifelse(outliers_width, paste0("Outlier width: ", piles_df$width.1), NA)
+errors_piles <- rbind(errors_piles,
+  qaqc(piles_df, "Width Outliers", "Width outlier (z-score)", values_check, values_data)
+)
+
+# length
+outliers_length <- detect_outliers_zscore(piles_df$length.1)
+values_check <- !outliers_length
+values_data <- ifelse(outliers_length, paste0("Outlier length: ", piles_df$length.1), NA)
+errors_piles <- rbind(errors_piles,
+  qaqc(piles_df, "Length Outliers", "Length outlier (z-score)", values_check, values_data)
+)
+
+# Height
+outliers_height <- detect_outliers_zscore(piles_df$height.1)
+values_check <- !outliers_height
+values_data <- ifelse(outliers_height, paste0("Outlier Height: ", piles_df$height.1), NA)
+errors_piles <- rbind(errors_piles,
+  qaqc(piles_df, "Height Outliers", "Height outlier (z-score)", values_check, values_data)
+)
+
+# 6. Width 2, Length 2, Height 2 = 0
+values_check <- with(piles_df, is.na(width.2) & is.na(length.2) & is.na(height.2))
+values_data <- with(piles_df, paste0("width2=", width.2, ", length2=", length.2, ", height2=", height.2))
+
+errors_piles <- rbind(errors_piles, 
+                      qaqc(piles_df, "x2", "x2 = NA", values_check, values_data))
+
+
+# 7. Pack Ratio is reasonable 
+values_data <- piles_df$Pack..Ratio
+valid_values <- c(0.1:0.25)
+values_check <- values_data %in% valid_values
+
+errors_piles <- bind_rows(errors_piles, qaqc(piles_df, "Pack Ratio", "Pack Ratio is 0.1-0.25", values_check, values_data = values_data))
+
+# 8. Specific Gravity is Reasonable
+values_data <- piles_df$Spec..Grav.
+valid_values <- c(0.3:0.58)
+values_check <- values_data %in% valid_values
+
+errors_piles <- bind_rows(errors_piles, qaqc(piles_df, "Sp. Gravity", "Sp. Gravity is 0.3-0.58", values_check, values_data = values_data))
+
+# 9. Sample Area = 0.32
+values_data <- piles_headers$Plot.Area
+values_check <- values_data == 0.032
+errors_piles <- rbind(errors_piles,
+  qaqc(
+    piles_headers,
+    "Plot Area",
+    "Plot Area must be 0.032",
+    values_check,
+    values_data = values_data
+  )
+)
+
+
 
 
 ```
@@ -1029,6 +844,7 @@ errors_shrubs <- bind_rows(errors_shrubs, qaqc(
 errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_Trees, errors_cover, errors_seedlings, errors_shrubs)
 errors_ALL <- unique(errors_ALL)
 
+#change name of excel file: 
 write_xlsx(errors_ALL,"Error Logs/FALL_25_RX_00PRE.xlsx")
 
 
