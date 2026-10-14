@@ -1,7 +1,7 @@
 ---
-title: "6. ROMO RAPASS 2025"
+title: "1. 2026 ROMO RAPASS Year01 Post"
 author: "Christina Fossum"
-date: "2025-09-15"
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
@@ -9,34 +9,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Date: 9/01/2026
+Date: 10/05/2026
 Edited by: Christina Fossum
 
-*code for 2025 RAPASS QAQC edited to fit updated 2026 RAPASS pre-burn protocols
+Notes: QAQC code for the year01- post burn plots read during the 2026 field season.(This includes Beaver meadows broadcast burn and the Deer Mountain post- pile burn plots) 
 
-Edits:
-- Change name of WD 
-- add check for slope for fine fuels 
-- Add slope check for CWD 
-- Shrubs: subplot = 1, got rid of age class, added UV1 for height class
+* For step 2 "Load Data" don't forget to update directory_path to your source file location*
 
 
 
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Date: 09/15/2025
-Edited by: Christina Fossum
-
-**test
-Summary: QAQC code for 
-  # 1. 2024 Fall RX 01yr01 reads (RAP_01, RAP_02, RAP_03, RAP_04, RAP_06, RAP_09, RAP_10) 
-  # 2. 2025 Spring 01yr01 reads (RAP_13, RAP_14, RAP_15, RAP_16, PIPS_16, PIPS_08)
-  # 3. Pre reads for fall 2025 RX (PIPS_01, PIPS_02, PIPS_05, PIPO_09, PIPO_27, PIPS_14)
-  # 4. Thunder MOuntain Plots
-  # 5. West Side RAP plots from 2025
-  
-  ***Note: edit filepath for (2) load data, and fuel constant for fuels queries, and tree species!
   
 Contents / Steps:
 1. Load packages and functions
@@ -126,16 +107,21 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/PreBurn/"
+directory_path <- "FFI data - WORKING/BeaverMeadows_QAQC/"
 
 
 # load data (Surface Fuels - Fine)
 fuelsfine_df <- load_data(directory_path, "_Surface Fuels - Fine.csv$")
 fuelsfine_headers <-load_headers(directory_path, "_Surface Fuels - Fine.csv$")
 
+fuelsfine_df$MacroPlot.Name <- as.character(fuelsfine_df$MacroPlot.Name)
+
+
 # load data (Surface Fuels - 1000Hr)
 fuels1000_df <- load_data(directory_path, "_Surface Fuels - 1000Hr.csv$")
 fuels1000_headers <-load_headers(directory_path, "_Surface Fuels - 1000Hr.csv$")
+
+
 
 # load data (Surface Fuels - Duff/Litter)
 fuelsDL_df <- load_data(directory_path, "_Surface Fuels - Duff_Litter.csv$")
@@ -170,7 +156,7 @@ shrub_headers <- load_headers(directory_path, "_Density - Belts \\(metric\\)\\.c
 #3A. Fine Fuel
 Checks:
 1. Number of Transects = 2 
-2. Transect Length = 65.6 for 1hr, 10hr, 100hr
+2. Transect Length = 16.4 for 1hr and 10hr, 32.8 for 100hr
 3. FWD fuel constant = correct (default)
 4. Azimuth is 0 for Transect 1, 270 for transect 2
 5. Slope check
@@ -189,12 +175,12 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
   check_qaqc(
     data = fuelsfine_headers,
     query = "Fine Fuels NumTran",
-    message = "Number of Transects",
+    message = "2 Transects",
     condition = fuelsfine_headers$Num..Transects == 2
   )
 )
 
-# 2. Transect Length = 16.4 for 1hr and 10hr, 32.8 for 100hr
+# 2. Transect Length
 values_check <- with(fuelsfine_headers,
   X1.hr.Tran..Len. == 16.4 &
   X10.hr.Tran..Len. == 16.4 &
@@ -222,7 +208,7 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
   check_qaqc(
     fuelsfine_df,
     "Fuel Fine FuelConst",
-    "Fuel Constant",
+    "Fuel Constant = Default",
     fuelsfine_df$FWDFuConSt == "Default"
   )
 )
@@ -236,7 +222,7 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
   check_qaqc(
     fuelsfine_df,
     "Fine Fuel Azimuth",
-    "Correct Azimuth",
+    "Azimuth 0 for T1 or 270 for T2",
     azimuth_check
   )
 )
@@ -244,17 +230,16 @@ errors_FuelsFine <- bind_rows(errors_FuelsFine,
 
 # 5. Slope check
 slope_check <- with(fuelsfine_df,
-  (Slope %in% c(0:45))
+  (Slope %in% c(-30:30))
 )
 errors_FuelsFine <- bind_rows(errors_FuelsFine,
   check_qaqc(
     fuelsfine_df,
     "Fine Fuel Slope",
-    "Correct Slope",
+    "Slope -30 to 30%",
     slope_check
   )
 )
-
 
 
 # 6. Hits Check: Ensure 2 hits per plot
@@ -353,7 +338,7 @@ values_valid <- 2
 values_check <- values_data == values_valid
 errors_Fuels1000 <- qaqc(fuels1000_headers, 
                          "1000hr Fuels NumTran", 
-                         "Number of Transects", 
+                         "2 Transects", 
                          values_check,
                          values_data = values_data)
 
@@ -364,7 +349,7 @@ values_check <- values_data == values_valid
 errors_Fuels1000 <- rbind(errors_Fuels1000, 
                          qaqc(fuels1000_headers, 
                               "x1000 Fuels TranLen", 
-                              "Transect Length", 
+                              "Transect Length is 65.6", 
                               values_check,
                               values_data = values_data))
 
@@ -375,7 +360,7 @@ values_check <- values_data == values_valid
 errors_Fuels1000 <- rbind(errors_Fuels1000, 
                          qaqc(fuels1000_df, 
                               "x1000 CWD FuelConst", 
-                              "Fuel Constant", 
+                              "Fuel Constant = Default", 
                               values_check,
                               values_data = values_data))
 
@@ -393,13 +378,13 @@ errors_Fuels1000 <- rbind(errors_Fuels1000,
 #5. Slope Check
 
 slope_check <- with(fuels1000_df,
-  (Slope %in% c(0:45))
+  (Slope %in% c(-30:30))
 )
 errors_Fuels1000 <- bind_rows(errors_Fuels1000,
   check_qaqc(
     fuels1000_df,
     "1000hr Slope",
-    "Correct Slope",
+    "Slope -30 to 30%",
     slope_check
   )
 )
@@ -551,6 +536,8 @@ Checks:
 7. Correct Crown Class 
 8. Outlier values flagged for DBH, height, CBH
 9. Reasonable damage code
+10. Reasonable Scorch Height
+11. Reasonable Scorch Percent
 
 
 
@@ -662,7 +649,7 @@ errors_Trees <- rbind(
   )
 )
 
-# 8. Outlier detection for DBH, CBH, Height
+# 8. Outlier detection for DBH, CBH, Height, Scorch height & Percent
 
 detect_outliers_zscore <- function(x) {
   z <- (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
@@ -694,6 +681,24 @@ errors_Trees <- rbind(errors_Trees,
   qaqc(trees_df, "CBH Outliers", "CBH outlier (z-score)", values_check, values_data)
 )
 
+# Scorch Height
+outliers_SH <- detect_outliers_zscore(trees_df$Scorch.Ht.)
+values_check <- !outliers_SH
+values_data <- ifelse(outliers_SH, paste0("Outlier SH: ", trees_df$Scorch.Ht.), NA)
+errors_Trees <- rbind(errors_Trees,
+  qaqc(trees_df, "Scorch Ht Outliers", "Scorch Ht outlier (z-score)", values_check, values_data)
+)
+
+
+# Scorch Percent
+outliers_SP <- detect_outliers_zscore(trees_df$Crown.Scorch..)
+values_check <- !outliers_SP
+values_data <- ifelse(outliers_SP, paste0("Outlier SP: ", trees_df$Crown.Scorch..), NA)
+errors_Trees <- rbind(errors_Trees,
+  qaqc(trees_df, "Scorch % Outliers", "Scorch % outlier (z-score)", values_check, values_data)
+)
+
+
 
 # 9. Reasonable Damage code (Check for outliers)
 
@@ -722,6 +727,14 @@ errors_Trees <- rbind(
   errors_Trees,
   qaqc(trees_df, "Damage Code Outliers", "Rare damage codes (frequency < 2)", values_check, values_data)
 )
+
+# 10. Reasonable Scorch Height
+sch_check <- with(trees_df, Scorch.Ht. <= Height)
+
+errors_Trees <- bind_rows(errors_Trees, 
+                          check_qaqc(
+                            errors_Trees, "Scorch Height", "ScHt less than Ht", sch_check
+                          ))
 
 
 
@@ -1091,7 +1104,16 @@ errors_shrubs <- bind_rows(errors_shrubs, qaqc(
   values_check = values_check,
   values_data = values_data
 ))
-
+# 12. Reasonable count
+values_data <- shrub_df$Count
+values_check <- values_data %in% 1:20
+errors_shrubs <- bind_rows(errors_shrubs, qaqc(
+  data = shrub_df,
+  query = "Shrub Count",
+  query_message = "reasonable shrub count",
+  values_check = values_check,
+  values_data = values_data
+))
 
 
 
