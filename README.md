@@ -1,8 +1,12 @@
 # FFI-QAQC
 
+<<<<<<< HEAD
 CF test
-AL test1
+AL test2
 
+=======
+AJ test 2
+>>>>>>> f35006c900febe0bdecdf1b1c1f09c60111520e3
 Rocky Mountain National Park Fire Effects
 Automated process for conducting QA/QC of FFI data in R
 
