@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Edited: 10/07/2025 by Christina Fossum
 Purpose: update code for more reader-friendly error logs 
 
-Summary: QAQC code for All DINO plots through 2025 season
+Summary: QAQC code for All DINO plots 
   
 Contents / Steps:
 1. Load packages and functions

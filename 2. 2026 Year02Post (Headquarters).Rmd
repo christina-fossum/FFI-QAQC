@@ -107,7 +107,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/HQ_QAQC/"
+directory_path <- "FFI data - WORKING/Spring25rx/"
 
 
 # load data (Surface Fuels - Fine)
@@ -417,8 +417,8 @@ errors_Fuels1000 <- rbind(
   errors_Fuels1000,
   qaqc(
     fuels1000_df,
-    check_name   = "x1000 Dia value",
-    check_type   = "Diameter Outlier (Modified Z-score)",
+    query   = "x1000 Dia value",
+    query_message   = "Diameter Outlier (Modified Z-score)",
     values_check = values_check_z,
     values_data  = values_data_z
   )
@@ -1104,7 +1104,7 @@ errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_T
 errors_ALL <- unique(errors_ALL)
 
 #change name of excel file: 
-write_xlsx(errors_ALL,"Error Logs/FALL_25_RX_00PRE.xlsx")
+write_xlsx(errors_ALL,"Error Logs/Spring26rx_01Yr02_2026.xlsx")
 
 
 ```

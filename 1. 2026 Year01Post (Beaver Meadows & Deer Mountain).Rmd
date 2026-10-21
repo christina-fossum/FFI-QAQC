@@ -418,8 +418,8 @@ errors_Fuels1000 <- rbind(
   errors_Fuels1000,
   qaqc(
     fuels1000_df,
-    check_name   = "x1000 Dia value",
-    check_type   = "Diameter Outlier (Modified Z-score)",
+    query   = "x1000 Dia value",
+    query_message   = "Diameter Outlier (Modified Z-score)",
     values_check = values_check_z,
     values_data  = values_data_z
   )
