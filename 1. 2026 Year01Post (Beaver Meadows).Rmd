@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Date: 10/05/2026
-Edited by: Christina Fossum
+Date: 10/26/2026
+Edited by: Aline Johnson
 
 Notes: QAQC code for the year01- post burn plots read during the 2026 field season. 
 
@@ -107,7 +107,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/BeaverMeadows_QAQC/"
+directory_path <- "WORKING/Fall25RX/"
 
 
 # load data (Surface Fuels - Fine)
@@ -418,8 +418,8 @@ errors_Fuels1000 <- rbind(
   errors_Fuels1000,
   qaqc(
     fuels1000_df,
-    check_name   = "x1000 Dia value",
-    check_type   = "Diameter Outlier (Modified Z-score)",
+    query = "x1000 Dia value",
+    query_message = "Diameter Outlier (Modified Z-score)",
     values_check = values_check_z,
     values_data  = values_data_z
   )
@@ -733,7 +733,7 @@ sch_check <- with(trees_df, Scorch.Ht. <= Height)
 
 errors_Trees <- bind_rows(errors_Trees, 
                           check_qaqc(
-                            errors_Trees, "Scorch Height", "ScHt less than Ht", sch_check
+                            trees_df, "Scorch Height", "ScHt less than Ht", sch_check
                           ))
 
 
@@ -1127,7 +1127,7 @@ errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_T
 errors_ALL <- unique(errors_ALL)
 
 #change name of excel file: 
-write_xlsx(errors_ALL,"Error Logs/FALL_25_RX_00PRE.xlsx")
+write_xlsx(errors_ALL,"Error Logs/FALL_25_RX_01YR01_2026.xlsx")
 
 
 ```

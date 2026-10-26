@@ -1,0 +1,11 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Plot Area,Snag Plot Area,Break Pnt. Dia.,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/10/26,BME_RAP006,2026/06/15,True,0.032,0.032,15,"CAF, AGJ",ARL,,,,,NPS\cfossum,7/14/2026 11:52:32 PM,NPS\alightcap,8/13/2026 10:56:41 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Quarter,Tag Num.,Species,Status,Crown Class,DBH,Height,Live Crown Base Ht.,Comment,Is Verified,Damage 1,Damage 2,Damage 3,Damage 4,Damage 5,Char Ht.,Scorch Ht.,Crown Scorch %
+2026/10/26,BME_RAP006,2026/06/15,1,1,18,PIPO,L,I,35.7,9.5,2.1,,No,,,,,,,,
+2026/10/26,BME_RAP006,2026/06/15,1,2,19,PIPO,L,I,49.5,11.8,3.5,,No,INSE,,,,,,,
+2026/10/26,BME_RAP006,2026/06/15,1,3,20,PIPO,L,I,32.1,9.6,2.5,,No,FORK,CROK,,,,,,
+2026/10/26,BME_RAP006,2026/06/15,1,3,21,PIPO,L,I,32.3,10.2,4.2,,No,,,,,,,,
+2026/10/26,BME_RAP006,2026/06/15,1,3,22,PIPO,L,I,17.6,9.2,3,,No,,,,,,,,
+2026/10/26,BME_RAP006,2026/06/15,1,3,23,PIPO,L,I,34.6,10.5,5.4,,No,,,,,,,,
+2026/10/26,BME_RAP006,2026/06/15,1,4,24,PIPO,L,I,29.8,11.2,3.6,,No,CROK,,,,,,,

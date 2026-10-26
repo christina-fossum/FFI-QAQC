@@ -1,0 +1,5 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Plot Area,Snag Plot Area,Break Pnt. Dia.,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/10/26,FPIPS1T02:05,2026/06/19,True,0.032,0.032,15,"CAF, AGJ, NMW",CAF,,,,,NPS\cfossum,8/11/2026 10:15:13 PM,NPS\cfossum,8/13/2026 4:02:24 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Quarter,Tag Num.,Species,Status,Crown Class,DBH,Height,Live Crown Base Ht.,Comment,Is Verified,Damage 1,Damage 2,Damage 3,Damage 4,Damage 5,Char Ht.,Scorch Ht.,Crown Scorch %
+2026/10/26,FPIPS1T02:05,2026/06/19,1,2,2,PIPO,L,I,61.3,13.7,2.3,,No,,,,,,,,

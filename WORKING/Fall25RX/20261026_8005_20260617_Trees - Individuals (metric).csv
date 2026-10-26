@@ -1,0 +1,14 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Plot Area,Snag Plot Area,Break Pnt. Dia.,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/10/26,8005,2026/06/17,True,0.032,0.032,15,"AGJ, CAF, SP",ARL,,,,,NPS\cfossum,7/26/2026 8:32:34 PM,NPS\alightcap,9/2/2026 4:52:16 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Quarter,Tag Num.,Species,Status,Crown Class,DBH,Height,Live Crown Base Ht.,Comment,Is Verified,Damage 1,Damage 2,Damage 3,Damage 4,Damage 5,Char Ht.,Scorch Ht.,Crown Scorch %
+2026/10/26,8005,2026/06/17,1,2,66,PIPO,L,SC,21.3,9.3,1.8,,No,,,,,,,1.8,1
+2026/10/26,8005,2026/06/17,1,2,67,PIPO,L,C,62,19.2,6.1,,No,,,,,,,,
+2026/10/26,8005,2026/06/17,1,2,68,PIPO,L,I,29.6,12.9,1.9,,No,,,,,,,,
+2026/10/26,8005,2026/06/17,1,3,69,PIPO,L,SC,32.1,11.5,0.5,,No,,,,,,,,
+2026/10/26,8005,2026/06/17,1,4,70,PIPO,L,I,42.7,15.7,1,,No,,,,,,,4,1
+2026/10/26,8005,2026/06/17,1,1,71,PIPO,L,SC,17.4,8.3,3.3,,No,,,,,,,,
+2026/10/26,8005,2026/06/17,1,1,72,PIPO,L,I,24,15.2,4.3,,No,,,,,,,,
+2026/10/26,8005,2026/06/17,1,1,73,PIPO,L,SC,26.3,12.2,2.8,,No,,,,,,,,
+2026/10/26,8005,2026/06/17,1,1,74,PIPO,L,SC,17.5,7.3,1.8,,No,DTOP,,,,,,,
+2026/10/26,8005,2026/06/17,1,1,58,PIPO,L,I,29.8,16.6,1.2,,No,,,,,,,,
