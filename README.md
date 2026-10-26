@@ -1,10 +1,7 @@
 # FFI-QAQC
 
 <<<<<<< HEAD
-CF test
-AL test2
 
-cf test 10/26
 
 =======
 AJ test 2
