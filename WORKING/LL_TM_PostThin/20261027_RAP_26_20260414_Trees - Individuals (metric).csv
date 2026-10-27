@@ -1,0 +1,22 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Plot Area,Snag Plot Area,Break Pnt. Dia.,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/10/27,RAP_26,2026/04/14,True,0.032,0.032,15,"CAF, AGJ",AGJ,,,,,NPS\agjohnson,4/29/2026 7:34:05 PM,NPS\agjohnson,4/29/2026 7:34:05 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Quarter,Tag Num.,Species,Status,Crown Class,DBH,Height,Live Crown Base Ht.,Comment,Is Verified,Damage 1,Damage 2,Damage 3,Damage 4,Damage 5,Char Ht.,Scorch Ht.,Crown Scorch %
+2026/10/27,RAP_26,2026/04/14,1,1,65,PSME,L,C,28.6,17.6,0,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,1,67,PICO,L,I,24.2,12.8,1.5,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,1,68,PSME,L,I,32.5,14.5,0.2,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,1,69,PICO,L,I,22.5,11.1,4,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,1,71,PICO,L,I,26.3,14.6,4,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,2,72,PICO,L,I,29.6,14.2,1,,No,LIGT,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,3,73,PICO,L,I,32,14.5,2.3,,No,MAMM,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,3,70,PICO,L,I,23.2,11.2,2.4,,No,MAMM,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,3,74,PICO,L,I,26.9,14.4,2.5,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,3,75,PSME,L,SC,12.8,6.4,1.5,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,3,76,PICO,L,SC,16.1,9.6,2.3,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,4,77,PICO,L,SC,22,11.3,2.5,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,4,78,PSME,L,I,21.2,12.5,1,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,4,79,PSME,L,SC,17.6,10.5,2,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,4,80,PICO,L,I,23,14.2,0,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,4,81,PICO,L,I,21,13.5,1,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,4,82,PICO,L,I,22.8,12.5,4,,No,,,,,,,,
+2026/10/27,RAP_26,2026/04/14,1,4,84,PICO,L,X,25.9,15.1,4,,No,MAMM,,,,,,,

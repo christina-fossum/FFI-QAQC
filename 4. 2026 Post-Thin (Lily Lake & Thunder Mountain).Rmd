@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Date: 9/02/2026
-Edited by: Christina Fossum
+Date: 10/27/2026
+Edited by: Aline Johnson
 
 Code for post-thin plots (Thunder Mountain, Lily Lake)
 
@@ -106,7 +106,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/qaqc_tm/"
+directory_path <- "WORKING/LL_TM_PostThin/"
 
 
 # load data (Surface Fuels - Fine)
@@ -850,7 +850,7 @@ errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_T
 errors_ALL <- unique(errors_ALL)
 
 #change name of excel file: 
-write_xlsx(errors_ALL,"Error Logs/ThunderMountain_2026.xlsx")
+write_xlsx(errors_ALL,"Error Logs/2026_PostThin_LilyLake_ThunderMountain.xlsx")
 
 
 ```

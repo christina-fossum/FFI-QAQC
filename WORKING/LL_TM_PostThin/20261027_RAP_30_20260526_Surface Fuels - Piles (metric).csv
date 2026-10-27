@@ -1,0 +1,6 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Sample Area,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/10/27,RAP_30,2026/05/26,True,0.032,"CAF, ARL, AGJ",CAF,,,,,NPS\cfossum,8/17/2026 4:47:12 PM,NPS\cfossum,8/19/2026 2:44:28 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Pile Num.,Pile Count,Pile Type,Pile Composition,Pile Shape,Width 1,Width 2,Length 1,Length 2,Height 1,Height 2,Pack. Ratio,Spec. Grav.,Soil Cont.,Comment,UV1,UV2,UV3
+2026/10/27,RAP_30,2026/05/26,1,1,Hand,Conifer,HE,2.9,,2.6,,3.5,,0.16,0.38,,,,,
+2026/10/27,RAP_30,2026/05/26,2,1,Hand,Conifer,HE,2.4,,2.5,,2.2,,0.18,0.38,,,,,
