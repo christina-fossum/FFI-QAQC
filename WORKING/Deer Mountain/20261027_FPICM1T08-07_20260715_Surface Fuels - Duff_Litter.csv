@@ -1,0 +1,24 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Num. Transects,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/10/27,FPICM1T08:07,2026/07/15,True,2,"AGJ, ARL, CAF",AGJ,,,,,NPS\cfossum,8/17/2026 5:38:56 PM,NPS\agjohnson,10/5/2026 3:52:33 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Transect,Samp. Loc.,Litter Depth,Duff Depth,DLFuConSt,Off Set,Comment,Fuelbed Depth
+2026/10/27,FPICM1T08:07,2026/07/15,1,1,0,0,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,1,3,1.4,0.2,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,1,5,0.8,0.5,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,1,7,0.8,0,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,1,9,0.3,0,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,1,11,0.7,0,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,1,13,0.5,0,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,1,15,1.4,0.4,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,1,17,1.3,0.1,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,1,19,0.4,0,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,2,1,0.1,0,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,2,3,0.6,0,Default,Yes,1 FT R,
+2026/10/27,FPICM1T08:07,2026/07/15,2,5,1.7,0,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,2,7,0.2,0,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,2,9,0.8,0.4,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,2,11,0.7,0.8,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,2,13,1,0,Default,Yes,1 FT R,
+2026/10/27,FPICM1T08:07,2026/07/15,2,15,1.4,0.7,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,2,17,2.3,0.4,Default,No,,
+2026/10/27,FPICM1T08:07,2026/07/15,2,19,0.2,1.4,Default,No,,

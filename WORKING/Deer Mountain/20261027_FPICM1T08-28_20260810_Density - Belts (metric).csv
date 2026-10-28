@@ -1,0 +1,14 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Num. Transects,Num. Subbelts,Tran. Length,Tran. Width,Tran. Area,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/10/27,FPICM1T08:28,2026/08/10,True,2,4,20,2,40,"ARL, CAF",AGJ,Height Class,,,,NPS\cfossum,8/17/2026 5:43:04 PM,NPS\agjohnson,10/5/2026 11:02:08 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Transect,Subbelt,Item Code,Status,UV1,Count,Comment
+2026/10/27,FPICM1T08:28,2026/08/10,1,1,2,JUCO6,L,0.3,3,
+2026/10/27,FPICM1T08:28,2026/08/10,1,1,2,JUCO6,L,0.6,3,
+2026/10/27,FPICM1T08:28,2026/08/10,1,1,2,MARE11,L,0.15,9,
+2026/10/27,FPICM1T08:28,2026/08/10,1,1,1,JUCO6,L,0.15,3,
+2026/10/27,FPICM1T08:28,2026/08/10,1,1,1,JUCO6,L,0.3,11,
+2026/10/27,FPICM1T08:28,2026/08/10,1,1,1,JUCO6,L,0.6,3,
+2026/10/27,FPICM1T08:28,2026/08/10,1,1,1,MARE11,L,0.15,6,
+2026/10/27,FPICM1T08:28,2026/08/10,1,2,4,ROWO,L,0.15,4,
+2026/10/27,FPICM1T08:28,2026/08/10,1,2,4,JUCO6,L,0.3,1,
+2026/10/27,FPICM1T08:28,2026/08/10,1,2,2,JUCO6,L,0.15,1,
