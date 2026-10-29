@@ -1,0 +1,9 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Num. Transects,Num. Subbelts,Tran. Length,Tran. Width,Tran. Area,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/10/14,BME_RAP011,2025/08/21,True,2,4,20,2,40,CAF,CAF,,,,,NPS\cfossum,8/21/2025 6:53:36 PM,NPS\cfossum,8/21/2025 6:53:36 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Transect,Subbelt,Item Code,Status,UV1,Count,Comment
+2026/10/14,BME_RAP011,2025/08/21,1,1,1,RICE,L,,1,
+2026/10/14,BME_RAP011,2025/08/21,1,1,1,PUTR2,L,,2,
+2026/10/14,BME_RAP011,2025/08/21,1,1,2,PUTR2,L,,2,
+2026/10/14,BME_RAP011,2025/08/21,1,2,2,PUTR2,L,,1,
+2026/10/14,BME_RAP011,2025/08/21,1,2,4,RICE,L,,1,

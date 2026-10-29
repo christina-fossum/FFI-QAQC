@@ -1,0 +1,267 @@
+---
+title: "BeaverMeadowsRX"
+output: html_document
+date: "2026-10-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# TLS data: load and crop to only beaver meadows plots - save with other fall25rx clean data
+```{r}
+library(dplyr)
+library(stringr)
+
+vars <- read.csv("Data - Working/CORMP_intelimon_through_10152026.csv")
+vars <- vars %>% filter(str_detect(h_filename, "CORM8_8002|CORM8_8004|CORM8_8005|CORM8_8008|CORM8_8009|CORM8_8014|CORM8_8015|CORMP_0052|CORMP_0051|CORMP_0055|CORMP_0020"))
+
+#add column for treatment status, filter out unwanted scans, and rename plot names
+vars <- vars %>% slice(c(1:14, 16:18, 20:22, 24:26, 28:30))
+vars <- vars %>% mutate(Status = c("PreBurn", "Year01", "PreBurn", "Year01", "PreBurn", "Year01", "PreBurn", "Year01", "PreBurn", "Year01", "PreBurn", "Year01",
+                                   "PreBurn", "Year01", "PreBurn", "PostBurn", "Year01", "PreBurn", "PostBurn", "Year01", "PreBurn", "PostBurn", "Year01", "PreBurn", 
+                                   "PostBurn", "Year01"))
+vars <- vars %>% mutate(Plot = case_when(str_detect(h_filename, "CORM8_8002") ~ "8002", str_detect(h_filename, "CORM8_8004") ~ "8004", 
+                                         str_detect(h_filename, "CORM8_8005") ~ "8005", str_detect(h_filename, "CORM8_8008") ~ "8008", 
+                                         str_detect(h_filename, "CORM8_8009") ~ "8009", str_detect(h_filename, "CORM8_8014") ~ "8014",
+                                         str_detect(h_filename, "CORM8_8015") ~ "8015", str_detect(h_filename, "CORMP_0020") ~ "PIPS_14", 
+                                         str_detect(h_filename, "CORMP_0051") ~ "PIPS_02", str_detect(h_filename, "CORMP_0052") ~ "PIPS_01", 
+                                         str_detect(h_filename, "CORMP_0055") ~ "PIPS_05"))
+
+#delete unwanted columns
+vars <- vars %>% select(c(Plot, Status, 174:180, 182:187, 191:198, 266:274))
+
+
+vars <- vars %>% mutate(EastFuelsTotalAll = case_when(Status == "PreBurn" ~ EastFuelsPreTotalAll, Status == "PostBurn" ~ EastFuelsPostTotalAll,
+                                                      Status == "Year01" ~ EastFuelsYr01TotalAll, TRUE ~ NA_real_))
+vars <- vars %>% select(Plot, Status, EastFuelsTotalAll, EastMeanCBH, EastLiveTreeCount, EastTotalTreeCount, EastRXMeanScHt, EastRXMeanScPct, mGCvol, mUSvol, mMSvol, mOSvol, GCvol, USvol, MSvol, OSvol)
+
+write.csv(vars, "Data - Working/FFI_Data_Clean/Fall25rx/intelimonscandata_pre_post_year01.csv")
+```
+
+#Now that the data has been somewhat tidyd, make dataframes containing the following, merging TLS data with FFI data:
+
+*TREES: need to calculate: TBA, BasalArea, MeanTH, MDBH, TreesN, MaxTH, SDHT, StemsPacre for ffi data (and for model outputs: meanCBH, meanScHt, meanScPct, TotalTreeCount)
+
+*Fuels: pre, post, year01 fuels
+
+
+*mGCvol, mUSvol, mMSvol, mOSvol with shrub and veg cover data, fuels data, CBH & scorch data
+
+BS-substrate burn severity
+```{R}
+bs <- read.csv("Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_post_BURNSEVERITY.csv")
+vars <- read.csv("Data - Working/FFI_Data_Clean/Fall25rx/intelimonscandata_pre_post_year01.csv")
+vars <- vars %>% filter(Status == "PostBurn")
+vars <- vars %>% select(c(Plot,EastRXSubSev))
+
+bs_merged <- left_join(bs, vars)
+bs_merged <- bs_merged %>% select(c(Plot, PlotStatus, SubSev, EastRXSubSev))
+bs_merged <- bs_merged %>% rename(FFISubSev = SubSev, TLSSubSev = EastRXSubSev) %>% pivot_longer(cols = c(FFISubSev, TLSSubSev), names_to = "DataSource", values_to = "SubSev")
+
+library(ggplot2)
+ggplot(bs_merged, aes(x = DataSource, y = SubSev)) + geom_boxplot()
+
+```
+*I think the models were built using this data so this might not be worthwhile - but if we do burn this fall... then maybe we'll have something
+
+Fuels
+```{r}
+fuels <- read.csv("Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_post_year01_FUELS.csv")
+fuels <- fuels %>% select(c(Plot, PlotStatus, TotalAll))
+
+vars <- read.csv("Data - Working/FFI_Data_Clean/Fall25rx/intelimonscandata_pre_post_year01.csv")
+vars <- vars %>% select(c(Plot,Status, EastFuelsTotalAll)) %>% rename(PlotStatus = Status)
+
+fuels_merged <- left_join(fuels, vars)
+
+fuels_merged <- fuels_merged %>% rename(FFITotalAll = TotalAll, TLSTotalAll = EastFuelsTotalAll) %>% pivot_longer(cols = c(FFITotalAll, TLSTotalAll), names_to = "DataSource", values_to = "TotalFuelLoad")
+
+fuels_merged$PlotStatus <- factor(fuels_merged$PlotStatus, levels = c("PreBurn", "PostBurn", "Year01"), ordered = TRUE)
+
+ggplot(fuels_merged, aes(x = PlotStatus, y = TotalFuelLoad, fill = DataSource)) + geom_boxplot()
+
+ttest1 <-  fuels_merged %>% group_by(PlotStatus) %>% do(tidy(t.test(TotalFuelLoad ~ DataSource, data = .)))
+
+#separate out ben's plots
+fuels_merged <- fuels_merged %>% mutate(PlotCategory = case_when(startsWith(Plot, "8") ~ "bensplots", startsWith(Plot, "PIPS") ~ "FMH", TRUE ~ NA_character_))
+
+
+ggplot(fuels_merged, aes(x = PlotStatus, y = TotalFuelLoad, fill = DataSource)) + geom_boxplot() + facet_wrap(vars(PlotCategory))
+
+ 
+library(dplyr)
+library(broom)
+
+ttest <- fuels_merged %>%
+  group_by(PlotStatus, PlotCategory) %>%
+  do(tidy(t.test(TotalFuelLoad ~ DataSource, data = .)))
+
+#not great. ben's data is significantly different for tls vs fmh
+# but lets see if there are any weird outlier plots in his data I can get rid of
+
+#get rid of 8005 and 8009
+fuels_merged2 <- fuels_merged %>% filter(Plot != "8009" & Plot != "8005")
+
+ggplot(fuels_merged2, aes(x = PlotStatus, y = TotalFuelLoad, fill = DataSource)) + geom_boxplot() + facet_wrap(vars(PlotCategory))
+
+ttest2 <- fuels_merged2 %>%
+  group_by(PlotStatus, PlotCategory) %>%
+  do(tidy(t.test(TotalFuelLoad ~ DataSource, data = .)))
+
+#ok that worked - but lets try just getting rid of one plot
+#8005
+fuels_merged3 <- fuels_merged %>% filter(Plot != "8005")
+
+ttest3 <- fuels_merged3 %>%
+  group_by(PlotStatus, PlotCategory) %>%
+  do(tidy(t.test(TotalFuelLoad ~ DataSource, data = .)))
+
+#8009
+fuels_merged4 <- fuels_merged %>% filter(Plot != "8009" )
+
+ttest4 <- fuels_merged4 %>%
+  group_by(PlotStatus, PlotCategory) %>%
+  do(tidy(t.test(TotalFuelLoad ~ DataSource, data = .)))
+
+# I think it is worth just getting rid of the two plots, there are still 5 plots of ben's data
+                                                      
+
+```
+
+Trees: meanCBH, meanScHt, meanScPct
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(broom)
+trees <- read.csv("Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_post_year01_TREES.csv")
+
+trees_summary <- trees %>% select(Plot, PlotStatus, Tag.Num., Status, Live.Crown.Base.Ht., Scorch.Ht., Crown.Scorch..)
+#filter out dead trees
+trees_summary <- trees_summary %>% filter(Status == "L")
+
+trees_summary[is.na(trees_summary)] <- 0
+
+
+trees_summary <- trees_summary %>% group_by(Plot, PlotStatus) %>% 
+  summarise(meanCBH = mean(Live.Crown.Base.Ht.), meanScHt = mean(Scorch.Ht.), meanScPct = mean(Crown.Scorch..)) %>% ungroup()
+
+trees_summary <- trees_summary %>% pivot_longer(cols = c(meanCBH, meanScHt, meanScPct), names_to = "metric", values_to = "value") %>% mutate(DataSource = "FMH")
+
+vars <- read.csv("Data - Working/FFI_Data_Clean/Fall25rx/intelimonscandata_pre_post_year01.csv")
+
+vars <- vars %>% select(Plot, Status, EastMeanCBH, EastRXMeanScPct, EastRXMeanScHt) %>% 
+  rename(PlotStatus = Status, meanCBH = EastMeanCBH, meanScHt = EastRXMeanScHt, meanScPct = EastRXMeanScPct)
+
+vars <- vars %>% pivot_longer(cols = c(meanCBH, meanScHt, meanScPct), names_to = "metric", values_to = "value") %>% mutate(DataSource = "TLS")
+
+tree2 <- rbind(trees_summary, vars)
+
+tree2$PlotStatus <- factor(tree2$PlotStatus, levels = c("PreBurn", "PostBurn", "Year01"), ordered = TRUE)
+
+
+ggplot(tree2, aes(x = PlotStatus, y = value, fill = DataSource)) + geom_boxplot() + facet_wrap(vars(metric))
+
+
+
+
+tree2 <- tree2 %>% mutate(PlotCategory = case_when(startsWith(Plot, "8") ~ "bensplots", startsWith(Plot, "PIPS") ~ "FMH", TRUE ~ NA_character_))
+
+tree2 <- tree2 %>% mutate(DataType = case_when(DataSource == "TLS" ~ "TLS",
+                                               DataSource == "FMH" ~ "Field")) %>% select(-DataSource)
+
+#(1) CBH
+cbh <- tree2 %>% filter(metric == "meanCBH")
+cbh <- cbh %>% filter(PlotStatus != "PostBurn")
+cbh <- cbh %>% filter(PlotStatus == "Year01")
+
+
+ggplot(cbh, aes(x = PlotCategory, y = value, fill = DataType)) + geom_boxplot() 
+
+ttest_cbh <- cbh %>%
+  group_by(PlotCategory) %>%
+  do(tidy(t.test(value ~ DataType, data = .)))
+
+#(2) Mean ScPct and meanScHt
+ScHt <-  tree2 %>% filter(metric == "meanScHt") %>% filter(PlotStatus != "PreBurn")
+ScPct <- tree2 %>% filter(metric == "meanScPct") %>% filter(PlotStatus != "PreBurn")
+
+ggplot(ScPct, aes(x = PlotStatus, y = value, fill = DataType)) + geom_boxplot() + facet_wrap(vars(PlotCategory))
+
+ttest_ht <- ScHt %>%
+  group_by(PlotCategory) %>%
+  do(tidy(t.test(value ~ DataType, data = .)))
+
+
+ttest_pct <- ScPct %>%
+  group_by(PlotCategory) %>%
+  do(tidy(t.test(value ~ DataType, data = .)))
+
+
+```
+
+tree count
+```{r}
+
+
+```
+
+mGCvol vs total fuels
+```{r}
+fuels <- read.csv("Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_post_year01_FUELS.csv")
+
+fuels <- fuels %>% select(c(Plot, PlotStatus, FineWood, TotalWood, Duff, Litter, TotalAll, DuffDep, LittDep, TotDep))
+
+vars <- read.csv("Data - Working/FFI_Data_Clean/Fall25rx/intelimonscandata_pre_post_year01.csv")
+vars <- vars %>% select(c(Plot,Status, mGCvol, GCvol, EastFuelsTotalAll)) %>% rename(PlotStatus = Status)
+
+fuels_merged <- left_join(fuels, vars)
+fuels_merged2 <- fuels_merged %>% pivot_longer(cols = c(FineWood, TotalWood, Duff, Litter, TotalAll, DuffDep, LittDep, TotDep), names_to = "Fuel_Category", values_to = "value")
+
+ggplot(fuels_merged2, aes(x = value, y = mGCvol)) + geom_point() + facet_wrap(vars(Fuel_Category, PlotStatus))
+
+#none of these scatter plots seem to show any relationship. try subtracting year01-preburn?
+
+fuels_merged <- fuels_merged %>% select(Plot, PlotStatus, TotalAll, mGCvol) %>% filter(PlotStatus != "PostBurn")
+fuels_merged <- fuels_merged %>% pivot_wider(names_from = PlotStatus, values_from = c(TotalAll, mGCvol))
+fuels_merged <- fuels_merged %>% mutate(xTotalAll = TotalAll_PreBurn - TotalAll_Year01,
+                                        xmGCvol = mGCvol_PreBurn- mGCvol_Year01)
+
+#if anything, this looks like an inverse relationship. so idk
+
+
+
+
+
+```
+
+
+
+```{r}
+library(ggplot2)
+
+vars$Status <- factor(vars$Status, levels = c("PreBurn", "PostBurn", "Year01"), ordered = TRUE)
+vars <- vars %>% filter(Status == "PreBurn" | Status == "Year01")
+
+t.test(vars$EastMeanCBH ~ vars$Status)
+ggplot(vars, aes(Status, EastMeanCBH)) + geom_boxplot() + labs(title = "mean CBH Pre-Burn vs. 1 year Post-Burn (n=11, p = 0.2)") 
+
+t.test(vars$EastFuelsTotalAll ~ vars$Status)
+
+ggplot(vars, aes(Status, EastFuelsTotalAll)) + geom_boxplot()+ labs(title = "Total Fuel Load Pre-Burn vs. 1 year Post-Burn (n=11, p < 0.05)") 
+
+library(tidyverse)
+vars2 <- vars %>% select(c(Plot, Status, mGCvol, mUSvol, mMSvol, mOSvol)) %>% pivot_longer(cols = c(mGCvol, mUSvol, mMSvol, mOSvol), names_to = "m_vol_category", values_to = "point_volume")
+vars2$m_vol_category <- factor(vars2$m_vol_category, levels = c("mGCvol", "mUSvol", "mMSvol", "mOSvol"), ordered = TRUE)
+vars2 <- vars2 %>% filter(Status == "PreBurn" | Status == "Year01")
+
+ggplot(vars2, aes(m_vol_category, point_volume, fill = Status)) + geom_boxplot() + labs(title = "Point Volume Pre-Burn vs. 1 Year Post-Burn")
+
+
+
+
+
+```
