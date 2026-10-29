@@ -1,6 +1,0 @@
-Report Date,MacroPlot Name,Sample Event Date,Visited,Num. Transects,1-hr Tran. Len.,10-hr Tran. Len.,100-hr Tran. Len.,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
-2026/10/26,BME_RAP001,2026/06/09,True,2,16.4,16.4,32.8,"AGJ, CAF",AGJ,,,,,NPS\cfossum,7/14/2026 11:20:23 PM,NPS\agjohnson,7/29/2026 8:17:47 PM
-
-Report Date,MacroPlot Name,Sample Event Date,Transect,Azimuth,Slope,1 Hr Count,10 Hr Count,100 Hr Count,Comment,FWDFuConSt
-2026/10/26,BME_RAP001,2026/06/09,1,0,13,4,2,0,,Default
-2026/10/26,BME_RAP001,2026/06/09,2,270,13,9,4,0,,Default

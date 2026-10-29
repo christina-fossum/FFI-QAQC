@@ -1,7 +1,0 @@
-Report Date,MacroPlot Name,Sample Event Date,Visited,Plot Area,Snag Plot Area,Break Pnt. Dia.,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
-2026/10/26,BME_RAP009,2026/06/15,True,0.032,0.032,15,"AGJ, CAF",ARL,,,,,NPS\cfossum,7/14/2026 11:53:57 PM,NPS\alightcap,8/17/2026 9:04:14 PM
-
-Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Quarter,Tag Num.,Species,Status,Crown Class,DBH,Height,Live Crown Base Ht.,Comment,Is Verified,Damage 1,Damage 2,Damage 3,Damage 4,Damage 5,Char Ht.,Scorch Ht.,Crown Scorch %
-2026/10/26,BME_RAP009,2026/06/15,1,3,7,PIPO,L,I,44.1,12.1,1.4,,No,,,,,,,,
-2026/10/26,BME_RAP009,2026/06/15,1,3,8,PIPO,L,SC,41.9,10.8,1.4,,No,,,,,,,,
-2026/10/26,BME_RAP009,2026/06/15,1,3,9,PIPO,L,SC,28.2,9.7,1.3,,No,,,,,,,,
