@@ -1,0 +1,447 @@
+---
+title: "TLS Surface Fuel Prediction - plot scale"
+author: "Ben Helms"
+date: "2026-03-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "C:/Users/cfossum/OneDrive - DOI/Desktop/TLS repository")
+```
+
+Load packages 
+```{r}
+library(lidR)
+library(data.table)
+library(sf)
+library(rgl)
+library(alphashape3d)
+library(spanner)
+
+library(dplyr)
+library(tidyverse)
+
+library(purrr)
+library(Boruta)
+library(randomForest)
+library(ggplot2)
+library(caret)
+```
+
+Optional functions to convert PTX to LAS files
+```{r}
+# Function to read a .ptx file
+read_ptx <- function(ptx_files) {
+  lines <- readLines(ptx_files)
+  header <- as.integer(lines[1:10])
+  nrows <- header[1]
+  ncols <- header[2]
+  data <- fread(ptx_files, skip = 10, header = FALSE)
+  colnames(data) <- c("X", "Y", "Z", "Intensity", "R", "G", "B")
+  data$Intensity <- as.integer(round(data$Intensity * 32767))
+  data$ReturnNumber <- 1L # this is only applicable to single-return sensors 
+  data$NumberOfReturns <- 1L # this is only applicable to single-return sensors 
+  return(data)
+}
+
+# Function to convert data.table to LAS object
+convert_to_las <- function(data) {
+  scan <- LAS(data)
+  return(scan)
+}
+
+```
+
+For loop for extracting predictor variables from single-scan TLS data. Takes 5-30 minutes per plot depending on point density
+```{r}
+
+input_TLS <- "D:/Bens_MS_Data/ForestStructure/BenH_Chapter1_TLS_Overstory_Estimates/scan_processing/Center/ptx/input" # change to your file path for TLS scans 
+
+TLSfiles <- list.files(pattern = ".ptx", path = input_TLS, full.names = TRUE) # change to ".las" if using las files
+
+# create list to save predictors from each plot 
+preds <- list()
+
+for (file in TLSfiles) {
+  
+  Plot <- tools::file_path_sans_ext(basename(file))
+
+    # If using ptx files, use this chunk
+  #======================================================
+  ptx_data <- read_ptx(file)
+  las <- convert_to_las(ptx_data) 
+  #======================================================
+  
+  # If using las files, use this chunk
+  #======================================================
+  # las <- readTLS(file)
+  #======================================================
+
+  # Clip, thin, classify ground, normalize, and filter noise
+  las <- clip_circle(las, x = 0, y = 0, radius = 11.4) # change to desired radius. Assumes circular plot with scan at plot center
+  las_class <- classify_ground(las, csf(sloop_smooth = FALSE, class_threshold = 0.5,
+                                            cloth_resolution = 0.1, rigidness = 1L,
+                                            iterations = 500L, time_step = 0.65))
+  las_norm <- normalize_height(las_class, tin())
+  las_norm <- classify_noise(las_norm, ivf(0.25, 3))
+  las_norm <- filter_poi(las_norm, Classification != LASNOISE)
+  las_norm <- filter_poi(las_norm, Z <= 2) # isolate surface fuel layer. This is not mandatory but does reduce processing time 
+
+  # Predictor calculations
+#==================================================================
+  
+  # LAD (Leaf Area Density) metrics describe the vertical distribution of leaf area.
+  LAD_metrics <- as.data.frame(cloud_metrics(las_norm, ~metrics_lad(z = Z, z0 = 0, dz = .25, k = .5)))
+  # Gap fraction measures the proportion of open spaces in the canopy.
+  gap_fract_df <- as.data.frame(gap_fraction_profile(las_norm$Z, dz = .1))
+  
+   # Calculate total number of points.
+  n_points <- length(las_norm$X)
+  
+  # Decimate point cloud after extracting LAD, gap fraction, and number of points as they are based on counting laser points and should not be decimated
+  las_norm <- decimate_points(las_norm, random(2500))
+  
+  # Calculate standard point cloud and voxel metrics
+  std_pc_met_df <- as.data.frame(cloud_metrics(las_norm, func = .stdmetrics))
+  
+  # Calculate voxel-based metrics at a 0.5 m resolution.
+  std_vox_met_df <- as.data.frame(voxel_metrics(las_norm, res = 0.5, func = .stdmetrics))
+  
+  # Calculate the mean and standard deviation of voxel heights.
+  vox_stats <- data.frame(
+    mean_vox_ht = mean(std_vox_met_df$Z),
+    sd_vox_ht = sd(std_vox_met_df$Z)
+  )
+  
+  # Calculate surface roughness/complexity. (A higher value indicates a more complex surface)
+  horizontalRumpel <- as.data.frame(cloud_metrics(las_norm, ~metrics_rumple(x = X, y = Y, z = Z, pixel_size = .1))) 
+  horizontalRumpel <- horizontalRumpel %>% rename(horizontalRumpel = colnames(horizontalRumpel))
+  
+
+  # Calculate vertical rumple and canopy volume from voxel metrics.
+  voxM <- as.data.frame(cloud_metrics(las_norm, ~metrics_voxels(x = X, y = Y, z = Z, vox_size = .1, zmin = NA)))
+  
+  # Calculate Point Cloud Density 
+  # A custom function to calculate point density (points per cubic meter).
+  density_metric <- function(las_norm) {
+    r = 11.4 # change if this is not the plot radius 
+    h = max(las_norm$Z)
+    # Calculate the volume of the bounding box around the point cloud.
+    volume <- pi * r^2 * h
+    if (volume > 0) {
+      density <- length(las_norm$X) / volume
+    } else {
+      density <- 0
+    }
+    return(density)
+  }
+  
+  PC_density_df <- data.frame(PC_Density_m3 = density_metric(las_norm))
+  
+  # Calculate points per height quantile
+  max_z_df <- as.data.frame(max(las_norm$Z, na.rm = TRUE))
+  #Define the quantile breaks based on the maximum Z 
+  breaks <- seq(0, 1, by = 0.1) * max(las_norm$Z, na.rm = TRUE)
+  print(round(breaks, 2))
+  # Initialize counts
+  counts_per_quantile <- numeric(length(breaks) - 1)
+  
+  # Loop through the breaks to count points in each interval
+  for (i in 1:(length(breaks) - 1)) {
+    lower_bound <- breaks[i]
+    upper_bound <- breaks[i+1]
+    if (i == (length(breaks) - 1)) {
+      counts_per_quantile[i] <- sum(las_norm$Z >= lower_bound & las_norm$Z <= upper_bound)
+    } else {
+      counts_per_quantile[i] <- sum(las_norm$Z >= lower_bound & las_norm$Z < upper_bound)
+    }
+  }
+  total_points <- length(las_norm$Z)
+  percent_points <- (counts_per_quantile / total_points) * 100
+  quantile_labels <- paste0("Percent Below ", seq(10, 90, by = 10), "th Quantile")
+  quantile_labels <- c(quantile_labels, "100th Percent Quantile")
+  names(percent_points) <- quantile_labels
+  percent_points_quant <- data.frame(
+    quantile_label = names(percent_points),
+    percent = as.numeric(percent_points)
+  )
+  
+  percent_points_quant <- percent_points_quant %>%
+    pivot_wider(names_from = quantile_label, values_from = percent)
+  
+  
+  # Calculate eigenvalue metrics 
+  # Eigenvalues describe the geometric properties of a point cloud neighborhood.
+  eigan_met <- eigen_metrics(las_norm, radius = 0.05, ncpu = 8) 
+  eigan_stats_df <- eigan_met %>%
+    summarise(
+      across(where(is.numeric), .fns = list(
+        mean = ~mean(., na.rm = TRUE),
+        sd = ~sd(., na.rm = TRUE)
+      ))
+    )
+  
+  # Calculate percentage of points in defined SF strata 
+  # Divides the point cloud into vertical layers and counts points in each layer.
+  strata_definitions <- list(
+    list(lower = 0.00, upper = 0.25),
+    list(lower = 0.25, upper = 0.50),
+    list(lower = 0.50, upper = 1.00),
+    list(lower = 1.00, upper = 2.00)
+  )
+    strata_counts <- lapply(strata_definitions, function(s) {
+    if (s$lower == 0) {
+      sum(las_norm$Z >= s$lower & las_norm$Z <= s$upper)
+    } else {
+      sum(las_norm$Z > s$lower & las_norm$Z <= s$upper)
+    }
+  })
+  
+  # Calculate percentages and create a tidy data frame.
+  percent_points_in_strata <- unlist(strata_counts) / n_points * 100
+  strata_labels <- c("PC_Strata_0.00-0.25", "PC_Strata_0.25-0.50", "PC_Strata_0.50-1.00", "PC_Strata_1.00-2.00")
+  percent_points_in_strata_df <- as.data.frame(t(percent_points_in_strata))
+  colnames(percent_points_in_strata_df) <- strata_labels
+  
+
+  # Convex Hull Volume: The volume of the smallest convex shape enclosing all points.
+  # This gives an estimate of the total space occupied by the point cloud.
+  las_matrix <- st_coordinates(las_norm)
+  CH_ID <- rep(1, nrow(las_matrix))
+  las_matrix_4x4 <- cbind(las_matrix, CH_ID)
+  cHull <- as.data.frame(chullLiDAR3D(las_matrix_4x4, plotit = F, alpha = .8))
+  cHull_vol <- cHull$crownvolume
+  cHull_vol_df <- as.data.frame(cHull_vol)
+#==================================================================
+  
+  # Combine all outputs into a single data frame. Each calculated metric is added as a new column for the current plot.
+  Stat_outputs <- cbind(
+    Plot, PC_density_df, cHull_vol_df,
+    horizontalRumpel, vox_stats, std_pc_met_df,
+    percent_points_quant, percent_points_in_strata_df,
+    LAD_metrics, voxM, eigan_stats_df
+  )
+
+  # Compile predictors for each plot
+  preds[[Plot]] <- Stat_outputs
+  beepr::beep(sound = 1)
+
+}
+
+# save all predictors as a datrfame and remove predictors with NA or 0 variance 
+Predictor_df <- dplyr::bind_rows(preds) %>%
+    mutate(Plot = str_replace(Plot, "_C.*$", "")) 
+
+# identify predictors without 0 variance
+varianceTest <- as.data.frame(sapply(Predictor_df, var, na.rm = TRUE)) %>%
+  drop_na() %>%
+  filter(if_any(everything(), ~ .x > 0)) %>%
+  rownames()
+  
+final_predictor_set <- Predictor_df %>%
+  select(c("Plot", varianceTest))
+```
+
+data wrangling/merging 
+```{r}
+# read in surface fuel reference data 
+input_SFL <- read.csv("C:/Users/benhe/Desktop/ROMO_SF_test_dataset.csv") # change to your file path for surface fuel data
+
+Dataset <- full_join(input_SFL, final_predictor_set, by = "Plot") %>%
+  rename_with(make.names, everything(), unique = TRUE)
+
+SF_bio <- Dataset %>% # change to your surface fuel catagories
+  select(-c("Shrub", "herbaceous", "Lg_diam_WF", "Litter_1h", "Plot"))
+Herb <- Dataset %>%
+  select(-c("SF_biomass", "Shrub", "Lg_diam_WF", "Litter_1h", "Plot"))
+Shrub <- Dataset %>%
+  select(-c("SF_biomass", "herbaceous", "Lg_diam_WF", "Litter_1h", "Plot"))
+Large_diam_woody <- Dataset %>%
+  select(-c("SF_biomass", "herbaceous", "Shrub", "Litter_1h", "Plot"))
+Litter_1h <- Dataset %>%
+  select(-c("SF_biomass", "herbaceous", "Shrub", "Lg_diam_WF", "Plot"))
+
+```
+
+Random forest predictions
+```{r}
+# Build Data frame list for each vegetation/fuel category and performance metrics. Change names as needed for your own fuel components 
+
+RF_SF_data_list <- list( 
+  SF_bio = SF_bio,
+  Herb = Herb,
+  Shrub = Shrub,
+  Large_diam_woody = Large_diam_woody,
+  Litter_1h = Litter_1h)
+
+RF_selected_predictors_list <- list()
+RF_performance_summary <- data.frame()
+RF_final_models <- list()
+RF_importance_list <- list()
+nrmse_df <- data.frame(NRMSE = numeric(),
+                      Component = character())
+
+# Start first for loop to read in each data frame create generic naming schemes and perform Boruta selection 
+
+for (name in names(RF_SF_data_list)) {
+  
+  # Create empty vectors to store performance results
+  cv_rmse <- c()
+  cv_r2 <- c()
+  cv_nrmse <- c()
+  cv_bias <- c()
+  cv_r2_test <- c()
+  RF_all_importance_scores <- data.frame()
+
+  message(paste("--- Processing:", name, "---"))
+  
+  # Extract current dataset and rename the response variable 
+  current_df <- RF_SF_data_list[[name]]
+  names(current_df)[2] <- "y" # ensure that your response variable is the second column 
+  
+  # Rescale to mean zero unit variance
+  current_df <- current_df %>%
+    mutate(across(-c(y, Site), ~ as.vector(scale(.x)), .names = "{.col}")) %>%
+    select(where(~ !any(is.na(.))))
+  
+  # Perform Boruta Selection without considering site as a predictor 
+  # There is a chance that Boruta finds no important variables, ending the process. 
+  # If this happens, you can remove the Boruta selection step and go straight to random forest, but predictions may have high errors.
+  set.seed(123)
+  
+  Boruta <- Boruta(
+  y ~ . - Site,
+  data = current_df,
+  doTrace = 0,
+  ntree = 1000, 
+  maxRuns = 1000)
+  
+  # Resolve tentative features 
+  Boruta_Final <- TentativeRoughFix(Boruta)
+  print(Boruta_Final)
+  
+  # Get the confirmed list from boruta
+  biomass_predictors <- getSelectedAttributes(Boruta_Final)
+  borutaFormula <- getConfirmedFormula(Boruta_Final)
+  
+  # Store the list of predictors for each dataset
+  RF_selected_predictors_list[[name]] <- biomass_predictors
+  
+  # Check for empty predictors to prevent crashes
+  if(length(biomass_predictors) == 0) {
+    message(paste("No predictors selected for", name, "- skipping model."))
+    next}
+  
+  # Setup CV Parameters
+  set.seed(123) # For reproducibility
+  n_repeats <- 10
+  n_folds <- 5
+  
+  # Start cross validation using nested loops
+  
+  # 10-repeate loop 
+  for(r in 1:n_repeats) {
+    
+    set.seed(123 + r) # use + r to ensure that each repeat has a different testing/training dataframe 
+    
+    folds <- createFolds(current_df$Site, k = n_folds, list = TRUE) # split each fold by site to ensure equal site distribution
+    
+    # 5-fold
+    for(i in 1:n_folds) {
+      
+      # Split data into training and testing sets 
+      set.seed(123)
+      test_indices <- folds[[i]]
+      train_data <- current_df[-test_indices, ] %>% dplyr::select(-Site)
+      test_data <- current_df[test_indices, ]%>% dplyr::select(-Site)
+      
+      # Remove predictors not chosen by boruta
+      Boruta_train <- train_data[, c(biomass_predictors, "y")]
+      
+      # Tune random forest model with caret on boruta training set using 3-fold CV
+      ctrl <- trainControl(method = "cv", number = 3, savePredictions = "final")  
+      
+      set.seed(123)
+      mtry_tuning <- train(
+        y ~ .,
+        data = Boruta_train,
+        method = "rf", 
+        trControl = ctrl,
+        returnResample = "all")
+      
+      # Save the best mtry (i.e., lowest mse)
+      best_mtry <- mtry_tuning$bestTune$mtry
+      
+      # Run final RF on training data with best mtry
+      forest <- randomForest::randomForest(formula = borutaFormula,
+                               data = Boruta_train,
+                               ntree = 1000,
+                               mtry = best_mtry)
+      
+    
+      # Extract the 10 most important variables for each RF run
+      imp <- data.frame(randomForest::importance(forest))
+      imp_df <- imp %>%
+        tibble::rownames_to_column(var = "Predictor") %>%
+        rename(Importance = IncNodePurity) %>%
+        arrange(desc(Importance)) %>%
+        slice_head(n = 10) %>%
+        mutate(Dataset = name) %>%
+        mutate(
+          Dataset = name,
+          Repeat = r,
+          Fold = i
+        )
+
+      RF_all_importance_scores <- rbind(RF_all_importance_scores, imp_df)
+      
+      # Predict on test data
+      predictions_test <- predict(forest, newdata = test_data)
+      
+      # Calculate Metrics
+      actuals_test <- test_data$y # Actual values from testing data 
+      rmse_val <- sqrt(mean((actuals_test - predictions_test)^2)) # RMSE from testing data
+      nrmse_val <- (rmse_val/mean(actuals_test)) *100 # Normalized RMSE in % from testing data
+      r2_val <- tail(forest$rsq, 1) # Out-of-box r^2
+      bias_test <- mean(actuals_test - predictions_test) # Bias from testing data
+      r2_test <- 1 - sum((actuals_test - predictions_test)^2)/sum((actuals_test - mean(actuals_test))^2) # r^2 from testing data
+      
+      # Store performance results
+      cv_rmse <- c(cv_rmse, rmse_val)
+      cv_nrmse <- c(cv_nrmse, nrmse_val)
+      cv_r2 <- c(cv_r2, r2_val)
+      cv_bias <- c(cv_bias, bias_test)
+      cv_r2_test <- c(cv_r2_test, r2_test)
+    
+    }
+  }
+  
+  # Compile performance results 
+  temp_performance <- data.frame(
+    randomForest = name,
+    OOB_Rsquared = mean(cv_r2),
+    OOB_sd_Rsquared = sd(cv_r2),
+    Test_RMSE = mean(cv_rmse),
+    Test_sd_RMSE = sd(cv_rmse),
+    Test_NRMSE = mean(cv_nrmse),
+    Test_sd_NRMSE = sd(cv_nrmse),
+    Test_bias = mean(cv_bias),
+    Test_bias_sd = sd(cv_bias),
+    test_Rsquared = mean(cv_r2_test),
+    Rsquared_test_sd = sd(cv_r2_test))
+  
+  RF_performance_summary <- rbind(RF_performance_summary, temp_performance)
+  RF_final_models[[name]] <- forest
+  
+  # Compile important predictors 
+  RF_importance_list[[name]] <- RF_all_importance_scores
+}  
+
+# Compile important predictors from all veg/fuel catagories 
+all_RF_importance <- bind_rows(RF_importance_list)
+
+#print results
+print(RF_performance_summary)
+
+```
+
