@@ -1,0 +1,208 @@
+---
+title: "FFI Data Tidying"
+output: html_document
+date: "2026-10-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This code goes through steps for processing/tidying FFI export data into clean, "tidy", dataframe for downstream analysis
+
+1. Cover
+2. Seedlings
+3. Shrubs
+4. Fuels report
+5. Trees
+6. Trees Report
+7. Burn Severity Report
+
+
+0. Load Libraries and functions & set working directory:
+```{r}
+library(dplyr)
+library(tidyverse)
+library(stringr)
+library(readr)
+
+# Data Functions for loading raw FFI output data
+# Header loading function
+load_headers <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    file_data <- read.csv(file) %>% select(1:10) %>% filter(Visited == "True")
+    file_data <- file_data %>% mutate(Comment = "")
+  })
+  return(do.call(rbind, data_list))
+}
+
+load_data <- function(directory_path, pattern) {
+  list_files <- list.files(path = directory_path, pattern = pattern, full.names = TRUE)
+  data_list <- lapply(list_files, function(file) {
+    if (file.info(file)$size == 0) return(NULL)
+    file_data <- tryCatch({
+      read.csv(file, skip = 3) %>% mutate(Comment = "")
+    }, error = function(e) {
+      message("Error reading file: ", file, " - skipping this file.")
+      return(NULL)
+    })
+    return(file_data)
+  })
+  do.call(rbind, data_list[!sapply(data_list, is.null)])
+}
+  
+directory_path <- "Data - Working/BMrx/"
+
+
+```
+
+1. Cover 
+```{r}
+cover_df <- load_data(directory_path, "_Cover - Points \\(metric\\)\\.csv$")
+list <- list.files(path = directory_path, pattern = "_Cover - Points \\(metric\\)\\.csv$", full.names = TRUE)   
+cover_headers <- lapply(list, function(file) read.csv(file, nrows = 1))
+cover_headers <- do.call(rbind, cover_headers)  
+cover_df <- left_join(x = cover_df, y = cover_headers, by = c("MacroPlot.Name", "Sample.Event.Date")) 
+#to see unique plot names, type in "unique(Xdf$MacroPlot.Name) into console
+cover_df <- cover_df %>% mutate(Plot = case_when(MacroPlot.Name == "FPIPS1T02:01" ~ "PIPS_01", 
+                                                 MacroPlot.Name == "FPIPS1T02:02" ~ "PIPS_02",
+                                                 MacroPlot.Name == "FPIPS1T02:05" ~ "PIPS_05",
+                                                 MacroPlot.Name == "FPIPS1T02:14" ~ "PIPS_14", TRUE ~ MacroPlot.Name))%>%select(-MacroPlot.Name) 
+cover_df <- cover_df %>% mutate(PlotStatus = case_when(startsWith(Sample.Event.Date, "2025") ~ "PreBurn",
+                                                       startsWith(Sample.Event.Date, "2026") ~ "Year01", TRUE ~ NA_character_))
+cover_df <- cover_df %>% select(c(Plot, PlotStatus, Tape, Transect, Point, Order, Species, Height, Status, Comment.x, Num..Transects, Tran..Length))
+
+  
+write.csv(cover_df, "Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_year01_COVER.csv")  
+
+
+```
+
+2. Seedlings
+```{r}
+seedling_df <- load_data(directory_path, "_Density - Quadrats \\(metric\\)\\.csv$")
+list <- list.files(path = directory_path, pattern = "_Density - Quadrats \\(metric\\)\\.csv$", full.names = TRUE)
+seedling_headers <- lapply(list, function(file) read.csv(file, nrows = 1))
+seedling_headers <- do.call(rbind, seedling_headers)  
+seedling_df <- left_join(x = seedling_df, y = seedling_headers, by = c("MacroPlot.Name", "Sample.Event.Date"))
+seedling_df <- seedling_df %>% mutate(Plot = case_when(MacroPlot.Name == "FPIPS1T02:01" ~ "PIPS_01", 
+                                                 MacroPlot.Name == "FPIPS1T02:02" ~ "PIPS_02",
+                                                 MacroPlot.Name == "FPIPS1T02:05" ~ "PIPS_05",
+                                                 MacroPlot.Name == "FPIPS1T02:14" ~ "PIPS_14", TRUE ~ MacroPlot.Name))%>%select(-MacroPlot.Name) 
+seedling_df <- seedling_df %>% mutate(PlotStatus = case_when(startsWith(Sample.Event.Date, "2025") ~ "PreBurn",
+                                                       startsWith(Sample.Event.Date, "2026") ~ "Year01", TRUE ~ NA_character_))
+
+seedling_df <- seedling_df %>% select(c(Plot, PlotStatus, Quadrat, Item.Code, Status, Height, Count, Comment.x, Num..Quad..Tran., Quad..Length, Quad..Width, Quad..Area))
+
+write.csv(seedling_df, "Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_year01_SEEDLING.csv")
+
+```
+
+3. Shrub
+```{r}
+shrub_df <- load_data(directory_path, "_Density - Belts \\(metric\\)\\.csv$")
+list <- list.files(path = directory_path, pattern = "_Density - Belts \\(metric\\)\\.csv$", full.names = TRUE)
+shrub_headers <- lapply(list, function(file) read.csv(file, nrows = 1))
+shrub_headers <- do.call(rbind, shrub_headers)  
+shrub_df <- left_join(x = shrub_df, y = shrub_headers, by = c("MacroPlot.Name", "Sample.Event.Date")) 
+
+shrub_df <- shrub_df %>% mutate(Plot = case_when(MacroPlot.Name == "FPIPS1T02:01" ~ "PIPS_01", 
+                                                 MacroPlot.Name == "FPIPS1T02:02" ~ "PIPS_02",
+                                                 MacroPlot.Name == "FPIPS1T02:05" ~ "PIPS_05",
+                                                 MacroPlot.Name == "FPIPS1T02:14" ~ "PIPS_14", TRUE ~ MacroPlot.Name))%>%select(-MacroPlot.Name) 
+shrub_df <- shrub_df %>% mutate(PlotStatus = case_when(startsWith(Sample.Event.Date, "2025") ~ "PreBurn",
+                                                       startsWith(Sample.Event.Date, "2026") ~ "Year01",TRUE ~ NA_character_))
+
+shrub_df <- shrub_df %>% select(c(Plot, PlotStatus, Transect, Subbelt, Item.Code, Status, UV1, Count, Num..Transects, Num..Subbelts, Tran..Length, Tran..Width, Tran..Area)) %>% rename(HeightClass.m = UV1)
+
+write.csv(shrub_df, "Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_year01_SHRUB.csv")
+
+
+```
+
+4. Fuels
+```{r}
+
+fuels_report <- read.csv("Data - Working/BMrx//Report_SurfaceFuels_E.csv", skip = 2)
+fuels_report <- fuels_report %>% mutate(Plot = case_when(Macroplot == "FPIPS1T02:01" ~ "PIPS_01", 
+                                                 Macroplot == "FPIPS1T02:02" ~ "PIPS_02",
+                                                 Macroplot == "FPIPS1T02:05" ~ "PIPS_05",
+                                                 Macroplot == "FPIPS1T02:14" ~ "PIPS_14", TRUE ~ Macroplot ))%>%select(-Macroplot) 
+
+fuels_report <- fuels_report %>% select(c(Plot, MonStatus, OneHr, TenHr, HunHr, FineWood, X.3_Snd, X.3_Rot, TotalWood, Duff, Litter, TotalAll, DuffDep, LittDep, TotDep))
+
+fuels_report <- fuels_report %>% slice(c(1:14, 25:27, 38:40, 52:54, 66:68))
+
+fuels_report <- fuels_report %>% mutate(PlotStatus = case_when(MonStatus == "02PRE" | MonStatus == "01PRE" ~ "PreBurn", MonStatus == "03POST" | MonStatus == "02POST" ~ "PostBurn", MonStatus == "03YR01" | MonStatus == "02YR01" ~ "Year01"))
+
+fuels_report <- fuels_report %>% select(c(Plot, PlotStatus, OneHr, TenHr, HunHr, FineWood, X.3_Snd, X.3_Rot, TotalWood, Duff, Litter, TotalAll, DuffDep, LittDep, TotDep))
+
+write.csv(fuels_report, "Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_post_year01_FUELS.csv")
+
+
+```
+
+5. Trees
+```{r}
+trees_df <- load_data(directory_path, "_Trees - Individuals \\(metric\\)\\.csv$")
+list <- list.files(path = directory_path, pattern = "_Trees - Individuals \\(metric\\)\\.csv$", full.names = TRUE) 
+trees_headers <- lapply(list, function(file) read.csv(file, nrows = 1))
+trees_headers <- do.call(rbind, trees_headers)  
+trees_df <- left_join(x = trees_df, y = trees_headers, by = c("MacroPlot.Name", "Sample.Event.Date"))
+
+trees_df <- trees_df %>% mutate(Plot = case_when(MacroPlot.Name == "FPIPS1T02:01" ~ "PIPS_01", 
+                                                 MacroPlot.Name == "FPIPS1T02:02" ~ "PIPS_02",
+                                                 MacroPlot.Name == "FPIPS1T02:05" ~ "PIPS_05",
+                                                 MacroPlot.Name == "FPIPS1T02:14" ~ "PIPS_14", TRUE ~ MacroPlot.Name))%>%select(-MacroPlot.Name) 
+trees_df <- trees_df %>% mutate(PlotStatus = case_when(
+  Sample.Event.Date == "2025/07/30" | Sample.Event.Date == "2025/07/31" ~ "PreBurn",
+  Sample.Event.Date == "2025/11/20" | Sample.Event.Date == "2025/11/21" ~ "PostBurn",
+  Sample.Event.Date == "2026/07/16" | Sample.Event.Date == "2026/06/17" | Sample.Event.Date == "2026/06/19" | Sample.Event.Date == "2026/07/16" |Sample.Event.Date == "2026/07/15" ~ "Year01"))
+                                
+                                
+                                
+
+trees_df <- trees_df %>% select(c(Plot, PlotStatus, Quarter, Tag.Num., Species, Status, Crown.Class, DBH, Height, Live.Crown.Base.Ht., Damage.1, Damage.2, Char.Ht., Scorch.Ht., Crown.Scorch.., Plot.Area, Break.Pnt..Dia.))
+
+write.csv(trees_df, "Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_post_year01_TREES.csv")
+
+
+```
+
+6. Trees Report
+```{r}
+trees_report <- read.csv("Data - Working/BMrx//Report_TreesbySpecies_E.csv", skip = 2)
+trees_report <- trees_report %>% mutate(Plot = case_when(Macroplot == "FPIPS1T02:01" ~ "PIPS_01", 
+                                                 Macroplot == "FPIPS1T02:02" ~ "PIPS_02",
+                                                 Macroplot == "FPIPS1T02:05" ~ "PIPS_05",
+                                                 Macroplot == "FPIPS1T02:14" ~ "PIPS_14", TRUE ~ Macroplot ))%>%select(-Macroplot)
+
+trees_report <- trees_report %>% select(c(Plot, MonStatus, Species, Individuals, Snag, Total, BA, LiCrBHt, Height, QMD, CrScPct, ScorchHt,CharHt))
+
+trees_report <- trees_report %>% slice(c(1:14, 32:34, 45:47, 58:60))
+
+trees_report <- trees_report %>% mutate(PlotStatus = case_when(MonStatus == "02PRE" | MonStatus == "01PRE" ~ "PreBurn", MonStatus == "03POST" | MonStatus == "02POST" ~ "PostBurn", MonStatus == "03YR01" | MonStatus == "02YR01" ~ "Year01"))
+
+trees_report <- trees_report %>% select(c(Plot, PlotStatus, Species, Individuals, Snag, Total, BA, LiCrBHt, Height, QMD, CrScPct, ScorchHt,CharHt))
+
+write.csv(trees_report, "Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_post_year01_TREESREPORT.csv")
+
+```
+
+7. Burn Severity Report
+```{r}
+bs_report <- read.csv("Data - Working/BMrx//Report_PostBurnSeverity.csv")
+bs_report <- bs_report %>% mutate(Plot = case_when(Macroplot == "FPIPS1T02:01" ~ "PIPS_01", 
+                                                 Macroplot == "FPIPS1T02:02" ~ "PIPS_02",
+                                                 Macroplot == "FPIPS1T02:05" ~ "PIPS_05",
+                                                 Macroplot == "FPIPS1T02:14" ~ "PIPS_14", TRUE ~ Macroplot ))%>%select(-Macroplot) 
+bs_report <- bs_report %>% slice(c(3,6,9,11))
+bs_report <- bs_report %>% mutate(PlotStatus = "PostBurn")
+bs_report <- bs_report %>% select(c(Plot, PlotStatus, 3:14))
+
+write.csv(bs_report, "Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_post_BURNSEVERITY.csv")
+
+```
+
+

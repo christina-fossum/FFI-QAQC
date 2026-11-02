@@ -1,0 +1,248 @@
+---
+title: "DINO_Update"
+author: "Christina Fossum"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "C:/Users/cfossum/OneDrive - DOI/Desktop/TLS repository")
+```
+
+# Models for UTDSP Intelimon Update
+
+## Contents: 
+
+1. BB_PC_Cheatgrass: Model for Cheatgrass percent coverin Bighorn Basin
+
+2. BB_PC_NativeGrass: Model for native grass percent cover in Bighorn Basin
+
+3. BB_PC_Shrub: Model for shrub percent cover
+
+
+
+
+
+# 1. BB_PC_Cheatgrass
+
+model formula:
+lm1 <- lm(formula = train_pred$PC_BRTE ~ fuel0_3l1_kurt + shrubs_l1_kurt)
+
+```{r}
+
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/DINO_Update/DINO_pred.csv") %>% select(-1)
+vars <- read.csv("TLS/intelimon models/DINO_Update/DINO_vars.csv")%>% select(-1)
+
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.3* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load model
+lm1<- readRDS("TLS/intelimon models/DINO_Update/BB_PC_Cheatgrass.rda")
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$PC_BRTE)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Percent Cover: Cheatgrass') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$PC_BRTE
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$PC_BRTE)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
+
+# 2. BB_PC_NativeGrass
+
+model formula:
+lm1 <- lm(formula = train_pred$PC_NativeGrass ~ h_GC_kurt + fuel0_3l1_vari + hr0_10_l1_vari)
+
+```{r}
+
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/DINO_Update/DINO_pred.csv") %>% select(-1)
+vars <- read.csv("TLS/intelimon models/DINO_Update/DINO_vars.csv")%>% select(-1)
+
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.2* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load model
+lm1<- readRDS("TLS/intelimon models/DINO_Update/BB_PC_NativeGrass.rda")
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$PC_NativeGrass)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Percent Cover: Native Grass') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$PC_NativeGrass
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$PC_NativeGrass)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
+
+# 3. BB_PC_Shrub
+
+model formula:
+lm1 <- lm(formula = train_pred$PC_Shrub ~h_OS_per  +  vox_l1_tgi + fine_l1_vari )
+
+```{r}
+
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/DINO_Update/DINO_pred.csv") %>% select(-1)
+vars <- read.csv("TLS/intelimon models/DINO_Update/DINO_vars.csv")%>% select(-1)
+
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.2* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load model
+lm1<- readRDS("TLS/intelimon models/DINO_Update/BB_PC_Shrub.rda")
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$PC_Shrub)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Percent Cover: Native Grass') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$PC_Shrub
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$PC_Shrub)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,807 @@
+---
+title: "RMNP Intelimon Update"
+author: "Christina Fossum"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "C:/Users/cfossum/OneDrive - DOI/Desktop/TLS repository")
+```
+
+# Models for RMNP intelimon data
+
+## Contents:
+1. ROMO_East_Fuels:
+    a. ROMO_East_Fuels_PRE_TotalAll: model for pre-burn total fuel load (tons/acre)
+    b. ROMO_East_Fuels_POST_TotalAll: model for post-burn total fuel load (tons/acre)
+    c. ROMO_East_Fuels_YR01_TotalAll: model for yr01-post-burn total fuel load (tons/acre)
+    
+2. ROMO_East_Trees
+    a. ROMO_East_TotalTreeCount: model for total tree count per plot
+    b. ROMO_East_LiveTreeCount: model for live tree count per plot
+    c. ROMO_East_meanCBH: model for mean canopy base height
+
+3. ROMO_East_RX
+    a. ROMO_East_RX_SubSev: model for post-burn substate burn severity
+    b. ROMO_East_RX_MeanScPct: model for average percent scorch
+    c. ROMO_East_RX_MeanScHt: model for average scorch height (m)
+
+4. ROMO_West_Fuels
+    a. ROMO_West_Fuels_TotalAll: model for mixed conifer total fuel load (tons/acre)
+    b. ROMO_West_Fuels_TotalWood: model for mixed conifer total woody fuel load (tons/acre)
+    
+
+
+
+
+
+# 1. ROMO_East_Fuels
+
+## a. ROMO_East_Fuels_PRE_TotalAll
+
+model formula:
+lm1 <- lm(formula = train_pred$TotalAll ~  hr100_1000_l1_median + hr100_1000_l1_tgi)
+
+other top model variables:
+- hr0_10_l1_vari
+- s_lng_prop_sk
+- maxSD
+- h_l2_median
+- h_US_cnt
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/1. ROMO_East_Fuels/a. ROMO_East_Fuels_PRE_TotalAll/ROMO_East_Fuels_PRE_TotalAll_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/1. ROMO_East_Fuels/a. ROMO_East_Fuels_PRE_TotalAll/ROMO_East_Fuels_PRE_TotalAll_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.2* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load model
+lm1<- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/1. ROMO_East_Fuels/a. ROMO_East_Fuels_PRE_TotalAll/ROMO_East_Fuels_PRE_TotalAll.rda")
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$TotalAll)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Pre-Burn Total Fuels') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$TotalAll
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$TotalAll)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+
+```
+
+
+## b. ROMO_East_Fuels_POST_TotalAll
+
+model formula:
+lm1 <- lm(formula = train_pred$TotalAll ~ h_l1_kurt    +  h_zpcum4    +   LF_SLPD )
+
+other top model variables:
+- Basalarea, maxTH, CBH
+- LF_FBFM13
+- h_zpcum1, h_zq5, h_zpcum5
+- OLAI
+- fuel0_3l1_vari, fuel0_3l1_median
+
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/1. ROMO_East_Fuels/b. ROMO_East_Fuels_POST_TotalAll/ROMO_East_Fuels_POST_TotalAll_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/1. ROMO_East_Fuels/b. ROMO_East_Fuels_POST_TotalAll/ROMO_East_Fuels_POST_TotalAll_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.2* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+
+# Load model
+lm1<- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/1. ROMO_East_Fuels/b. ROMO_East_Fuels_POST_TotalAll/ROMO_East_Fuels_POST_TotalAll.rda")
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$TotalAll)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Post-Burn Total Fuels') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$TotalAll
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$TotalAll)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+
+```
+
+
+
+## c. ROMO_East_Fuels_YR01_TotalAll
+
+model formula:
+lm1 <- lm(formula = train_pred$TotalAll ~  h_ground_cnt + shrubs_l1_median )
+
+other top model variables:
+- s_lng_zero_per
+- shrubs_l1_skew
+- LAI
+- hr100_1000_l1_vari
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/1. ROMO_East_Fuels/c. ROMO_East_Fuels_YR01_TotalAll/ROMO_East_Fuels_YR01_TotalAll_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/1. ROMO_East_Fuels/c. ROMO_East_Fuels_YR01_TotalAll/ROMO_East_Fuels_YR01_TotalAll_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.25* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load model
+lm1<- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/1. ROMO_East_Fuels/c. ROMO_East_Fuels_YR01_TotalAll/ROMO_East_Fuels_YR01_TotalAll.rda")
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$TotalAll)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Yr01 Post-Burn Total Fuels') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$TotalAll
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$TotalAll)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+
+```
+
+
+
+
+
+
+# 2. ROMO_East_Trees
+
+## a. ROMO_East_TotalTreeCount
+
+model formula:
+lm1 <- lm(formula = train_pred$TreeCount ~ h_MS_cnt + h_MS_per + fuel0_3l1_kurt)
+
+other top model variables:
+- h_zq20
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/2. ROMO_East_Trees/a. ROMO_East_TotalTreeCount/ROMO_EAST_TotalTreeCount_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/2. ROMO_East_Trees/a. ROMO_East_TotalTreeCount/ROMO_EAST_TotalTreeCount_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.2* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load Model
+lm1 <- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/2. ROMO_East_Trees/a. ROMO_East_TotalTreeCount/ROMO_EAST_TotalTreeCount.rda")
+
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$TreeCount)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Total Tree Count') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$TreeCount
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$TreeCount)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
+
+## b. ROMO_East_LiveTreeCount
+
+model formula: 
+lm1 <- lm(formula = train_pred$L ~ h_l2_per  +    h_l5_cnt + fine_l1_vari)
+
+Other top model variables:
+- CanopyCover
+- fuel0_3l1_cnt
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/2. ROMO_East_Trees/b. ROMO_East_LiveTreeCount/ROMO_EAST_LiveTreeCount_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/2. ROMO_East_Trees/b. ROMO_East_LiveTreeCount/ROMO_EAST_LiveTreeCount_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.2* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load Model
+lm1 <- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/2. ROMO_East_Trees/b. ROMO_East_LiveTreeCount/ROMO_EAST_LiveTreeCount.rda")
+
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$L)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Live Tree Count') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$L
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$L)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
+
+## c. ROMO_East_meanCBH
+
+model formula:
+lm1 <- lm(formula = train_pred$meanCBH ~   LAHV + MeanSA + hr0_10_l1_std)
+
+Other top model variables:
+- SDSHT
+- MLAI
+- h_ng_vari
+- vox_l1_vari
+- shrubs_l1_tgi
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/2. ROMO_East_Trees/c. ROMO_East_meanCBH/ROMO_EAST_meanCBH_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/2. ROMO_East_Trees/c. ROMO_East_meanCBH/ROMO_EAST_meanCBH_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.1* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load Model
+lm1 <- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/2. ROMO_East_Trees/c. ROMO_East_meanCBH/ROMO_EAST_meanCBH.rda")
+
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$meanCBH)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Canopy Base Height') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$meanCBH
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$meanCBH)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
+
+
+
+
+
+# 3. ROMO_East_RX
+
+## a. ROMO_East_RX_SubSev
+
+model formula:
+lm1 <- lm(formula = train_pred$SubSev ~    hr0_10_l1_median + s_l2_zero_per + h_MS_kurt )
+
+Other top model variables:
+- s_l4_prop_ku
+- h_l4_skew, h_l4_per
+- h_US_tgi, h_US_median
+- h_l2_std
+- s_l1_prop_ku
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/3. ROMO_East_RX/a. ROMO_East_RX_SubSev/ROMO_East_RX_SubSev_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/3. ROMO_East_RX/a. ROMO_East_RX_SubSev/ROMO_East_RX_SubSev_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.3* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+
+# Load Model
+lm1 <- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/3. ROMO_East_RX/a. ROMO_East_RX_SubSev/ROMO_East_RX_SubSev.rda")
+
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$SubSev)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Substrate Burn Severity') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$SubSev
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$SubSev)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
+## b. ROMO_East_RX_MeanScPct
+
+model formula:
+lm1 <- lm(formula = train_pred$MeanScPct ~    h_l3_tgi + LF_SLPD + s_lng_zero_per + TBA)
+
+other top model variables: 
+- LF_SLPD
+- h_l2_std
+- hr100_1000_l1_tgi
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/3. ROMO_East_RX/b. ROMO_East_RX_MeanScPct/ROMO_East_RX_MeanScPct_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/3. ROMO_East_RX/b. ROMO_East_RX_MeanScPct/ROMO_East_RX_MeanScPct_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.25* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load Model
+lm1 <- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/3. ROMO_East_RX/b. ROMO_East_RX_MeanScPct/ROMO_East_RX_MeanScPct.rda")
+
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$MeanScPct)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='mean Scorch Percent') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$MeanScPct
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$MeanScPct)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
+
+## c. ROMO_East_RX_MeanScHt
+
+model formula:
+lm1 <- lm(formula = train_pred$MeanScHt ~ h_l1_tgi   +   h_GC_median +fuel0_3l1_median )
+
+Other top model variables:
+- USvol
+- SDSHT
+- h_l3_tgi
+- ULAI
+- LF_SLPD
+- h_gc_tgi
+- fine_l1_tgi
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/3. ROMO_East_RX/c. ROMO_East_RX_MeanScHt/ROMO_East_RX_MeanScHt_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/3. ROMO_East_RX/c. ROMO_East_RX_MeanScHt/ROMO_East_RX_MeanScHt_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.2* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load Model
+lm1 <- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/3. ROMO_East_RX/c. ROMO_East_RX_MeanScHt/ROMO_East_RX_MeanScHt.rda")
+
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$MeanScHt)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='mean Scorch Height') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$MeanScHt
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$MeanScHt)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
+
+
+
+
+
+# 4. ROMO_West_Fuels
+
+## a. ROMO_West_Fuels_TotalAll
+
+model formula:
+lm1 <- lm(formula = train_pred$TotalAll ~ h_MS_tgi +   h_OS_per  +  LF_FDist)
+
+
+```{r}
+library(tidyverse)
+library(leaps)
+library(performance)
+library(ggplot2)
+
+# Load pred / vars data
+pred <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/4. ROMO_West_Fuels/a. ROMO_West_Fuels_TotalAll/ROMO_West_Fuels_TotalAll_pred.csv")
+vars <- read.csv("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/4. ROMO_West_Fuels/a. ROMO_West_Fuels_TotalAll/ROMO_West_Fuels_TotalAll_vars.csv")
+
+# Create training/test data
+set.seed(123)
+sample_size <- floor(0.2* nrow(vars))
+test_indices <- sample(seq_len(nrow(vars)), size = sample_size)
+train_vars <- vars[-test_indices, ]
+test_vars <- vars[test_indices, ]
+train_pred <- pred[-test_indices, ]
+test_pred <- pred[test_indices, ]
+
+# Load Model
+lm1 <- readRDS("TLS/intelimon models/March 2026 Intelimon Update/RMNP Intelimon Update/4. ROMO_West_Fuels/a. ROMO_West_Fuels_TotalAll/ROMO_West_Fuels_TotalAll.rda")
+
+
+#look at the summary r2 values and RMSE & check model for colinearity
+summary(lm1)
+r2(lm1) 
+rmse(lm1)
+check_model(lm1) 
+
+# Plot observed values vs. predicted
+lm_out <- predict.lm(lm1, vars)
+data<-data.frame(x=lm_out, y=pred$TotalAll)
+
+ggplot(data,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='Total Fuel Load') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+# use the model to predict test data
+test_out<- predict.lm(lm1,test_vars)
+errors<- test_out - test_pred$TotalAll
+mae <- mean(abs(errors))
+mse <- mean(errors^2)
+rmse <- sqrt(mse)
+rmse 
+
+# Plot test observed values vs. test predicted
+data2<- data.frame(x=test_out, y=test_pred$TotalAll)
+ggplot(data2,aes(x,y)) +
+  geom_point() +
+  geom_smooth(method='lm', se=FALSE,) +
+  theme_light() +
+  labs(x='Predicted Values', y='Observed Values', title='test') +
+  theme(plot.title = element_text(hjust=0.5, size=20, face='bold') 
+  ) 
+
+
+```
+
