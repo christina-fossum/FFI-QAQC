@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Edited: 10/07/2025 by Christina Fossum
+Edited: 10/27/2025 by Aline Johnson
 Purpose: update code for more reader-friendly error logs 
 
 Summary: QAQC code for All DINO plots 
@@ -95,6 +95,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 directory_path <- "FFI data - WORKING/DINO_BighornBasin2025/"
+
 
 # load data (Cover - Points)
 cover_df <- load_data(directory_path, "_Cover - Points \\(metric\\)\\.csv$")

@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Date: 10/13/2026
-Edited by: Christina Fossum
+Date: 10/27/2026
+Edited by: Aline Johnson
 
 Code for Deer Mountain pile plots (pre-burn)
 
@@ -107,7 +107,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/DeerMtnPile_QAQC/"
+directory_path <- "WORKING/Deer Mountain/"
 
 
 # load data (Surface Fuels - Fine)
@@ -1245,7 +1245,7 @@ errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_T
 errors_ALL <- unique(errors_ALL)
 
 #change name of excel file: 
-write_xlsx(errors_ALL,"Error Logs/FALL_25_RX_00PRE.xlsx")
+write_xlsx(errors_ALL,"Error Logs/DeerMountain2026.xlsx")
 
 
 ```  
