@@ -10,6 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This code goes through steps for processing/tidying FFI export data into clean, "tidy", dataframe for downstream analysis
 
+***11/02/2026: DINO - Iron Springs Bench
+
 1. Cover
 2. Seedlings
 3. Shrubs
@@ -52,7 +54,7 @@ load_data <- function(directory_path, pattern) {
   do.call(rbind, data_list[!sapply(data_list, is.null)])
 }
   
-directory_path <- "Data - Working/BMrx/"
+directory_path <- "../FFI Data - WORKING/dino_isb/"
 
 
 ```
@@ -65,16 +67,23 @@ cover_headers <- lapply(list, function(file) read.csv(file, nrows = 1))
 cover_headers <- do.call(rbind, cover_headers)  
 cover_df <- left_join(x = cover_df, y = cover_headers, by = c("MacroPlot.Name", "Sample.Event.Date")) 
 #to see unique plot names, type in "unique(Xdf$MacroPlot.Name) into console
-cover_df <- cover_df %>% mutate(Plot = case_when(MacroPlot.Name == "FPIPS1T02:01" ~ "PIPS_01", 
-                                                 MacroPlot.Name == "FPIPS1T02:02" ~ "PIPS_02",
-                                                 MacroPlot.Name == "FPIPS1T02:05" ~ "PIPS_05",
-                                                 MacroPlot.Name == "FPIPS1T02:14" ~ "PIPS_14", TRUE ~ MacroPlot.Name))%>%select(-MacroPlot.Name) 
-cover_df <- cover_df %>% mutate(PlotStatus = case_when(startsWith(Sample.Event.Date, "2025") ~ "PreBurn",
-                                                       startsWith(Sample.Event.Date, "2026") ~ "Year01", TRUE ~ NA_character_))
-cover_df <- cover_df %>% select(c(Plot, PlotStatus, Tape, Transect, Point, Order, Species, Height, Status, Comment.x, Num..Transects, Tran..Length))
+cover_df <- cover_df %>% mutate(Plot = case_when(MacroPlot.Name == "Iron Springs Bench Control Line 1" ~ "ISB_C1", 
+                                                 MacroPlot.Name == "Iron Springs Bench Control Line 2" ~ "ISB_C2",
+                                                 MacroPlot.Name == "Iron Springs Bench Control Line 3" ~ "ISB_C3",
+                                                 MacroPlot.Name == "Iron Springs Bench Control Line 5" ~ "ISB_C5",
+                                                 MacroPlot.Name == "Iron Springs Bench Experimental Line 1" ~ "ISB_E1",
+                                                 MacroPlot.Name == "Iron Springs Bench Experimental Line 2" ~ "ISB_E2",
+                                                 MacroPlot.Name == "Iron Springs Bench Experimental Line 3" ~ "ISB_E3",
+                                                 MacroPlot.Name == "Iron Springs Bench Experimental Line 4" ~ "ISB_E4",
+                                                 MacroPlot.Name == "Iron Springs Bench Experimental Line 5" ~ "ISB_E5",
+                                                 MacroPlot.Name == "Iron Springs Bench Experimental Line 6" ~ "ISB_E6",
+                                                 TRUE ~ MacroPlot.Name))%>%select(-MacroPlot.Name) 
+
+cover_df <- cover_df %>% mutate(PlotStatus = case_when(startsWith(Sample.Event.Date, "2026") ~ "01Year30", TRUE ~ NA_character_))
+cover_df <- cover_df %>% select(c(Plot, PlotStatus, Tape, Transect, Point, Order, Species, Height, Status, Comment.x, Num..Transects, Tran..Length, Num..Pts..Tran.))
 
   
-write.csv(cover_df, "Data - Working/FFI_Data_Clean/Fall25rx/fall25rx_pre_year01_COVER.csv")  
+write.csv(cover_df, "Data_Clean/IronSpringsBench01Year30.csv")  
 
 
 ```
