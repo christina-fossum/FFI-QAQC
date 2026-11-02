@@ -1,0 +1,14 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Plot Area,Snag Plot Area,Break Pnt. Dia.,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/11/02,RAP_49,2026/07/16,True,0.032,0.032,15,"ARL, CAF, AGJ",ARL,,,,,NPS\cfossum,8/20/2026 3:30:59 PM,NPS\alightcap,10/15/2026 7:52:02 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Quarter,Tag Num.,Species,Status,Crown Class,DBH,Height,Live Crown Base Ht.,Comment,Is Verified,Damage 1,Damage 2,Damage 3,Damage 4,Damage 5,Char Ht.,Scorch Ht.,Crown Scorch %
+2026/11/02,RAP_49,2026/07/16,1,2,42,PIPO,L,C,27.3,16.1,2.2,,No,,,,,,,,
+2026/11/02,RAP_49,2026/07/16,1,2,43,PIPO,L,C,30.9,15.3,1.9,,No,,,,,,,,
+2026/11/02,RAP_49,2026/07/16,1,2,44,PIPO,L,C,46.4,17.3,8.6,,No,,,,,,,,
+2026/11/02,RAP_49,2026/07/16,1,2,45,PIPO,L,I,46.6,10.3,1.8,,No,,,,,,,,
+2026/11/02,RAP_49,2026/07/16,1,2,46,PIPO,L,I,31.1,11.4,3.4,,No,,,,,,,,
+2026/11/02,RAP_49,2026/07/16,1,2,47,PIPO,L,C,40.6,18.2,2.5,,No,,,,,,,,
+2026/11/02,RAP_49,2026/07/16,1,4,48,PIPO,L,I,32.1,11.6,2.7,,No,FORK,,,,,,,
+2026/11/02,RAP_49,2026/07/16,1,4,49,PIPO,L,SC,16.5,6.2,2.1,,No,TWIN,WOND,,,,,,
+2026/11/02,RAP_49,2026/07/16,1,4,50,PIPO,L,SC,14.2,4,1.5,,No,TWIN,,,,,,,
+2026/11/02,RAP_49,2026/07/16,1,4,51,PIPO,L,SC,10.7,6.8,1.6,,No,TWIN,,,,,,,

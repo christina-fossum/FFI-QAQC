@@ -1,0 +1,27 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Plot Area,Snag Plot Area,Break Pnt. Dia.,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/11/02,RAP_41,2026/08/12,True,0.032,0.032,15,"ARL, CAF, GG",AGJ,,,,,NPS\cfossum,8/13/2026 7:17:39 PM,NPS\agjohnson,10/15/2026 5:01:56 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Quarter,Tag Num.,Species,Status,Crown Class,DBH,Height,Live Crown Base Ht.,Comment,Is Verified,Damage 1,Damage 2,Damage 3,Damage 4,Damage 5,Char Ht.,Scorch Ht.,Crown Scorch %
+2026/11/02,RAP_41,2026/08/12,1,1,75,PIPO,L,I,25.8,11.6,3.5,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,1,1,PIPO,D,BBD,,1.3,,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,1,76,PIPO,L,SC,21.6,7.3,1.2,,No,FORK,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,1,77,PSME,L,I,29.4,13.3,1,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,1,6,PSME,L,I,25.7,11.9,0.1,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,1,7,PSME,L,I,32.8,13.7,0.4,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,1,8,PIFL2,L,SC,16.3,6.5,0.4,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,1,9,PSME,L,SC,2.6,2.5,0,,No,TWIN,DTOP,ABGR,,,,,
+2026/11/02,RAP_41,2026/08/12,1,2,74,PIPO,L,I,33.4,12.2,6.4,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,2,86,PSME,L,I,30.9,10.6,0.2,,No,DTOP,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,2,87,PSME,L,SC,8.9,5.1,0,,No,ROTT,TWIN,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,2,3,PSME,L,SC,6.4,4.8,0,,No,TWIN,ABGR,WOND,,,,,
+2026/11/02,RAP_41,2026/08/12,1,2,4,PSME,L,I,27.8,10,0.2,,No,FORK,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,2,5,PSME,L,I,36.3,12.5,0.1,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,3,85,PIPO,L,I,41.3,12.4,6,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,3,83,PIPO,L,I,31.4,10.9,3,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,3,84,PSME,L,SC,13.8,6.4,0,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,3,82,PSME,L,C,40.8,15.2,2.5,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,4,81,PSME,L,I,35.3,12.9,0.5,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,4,80,PSME,L,I,34,13.7,0.4,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,4,79,PIPO,L,I,24.9,11.6,4.9,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,4,78,PSME,L,I,34.9,14.5,0,,No,,,,,,,,
+2026/11/02,RAP_41,2026/08/12,1,4,2,PIPO,D,LBS,5.7,3.5,,,No,,,,,,,,

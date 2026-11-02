@@ -1,0 +1,11 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Num. Transects,Num. Subbelts,Tran. Length,Tran. Width,Tran. Area,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/11/02,RAP_45,2026/07/25,True,2,4,20,2,40,"ARL, CAF, AGJ",ARL,Height Class,,,,NPS\cfossum,8/20/2026 3:16:12 PM,NPS\alightcap,10/19/2026 4:31:37 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Transect,Subbelt,Item Code,Status,UV1,Count,Comment
+2026/11/02,RAP_45,2026/07/25,1,1,2,RICE,L,0.15,2,
+2026/11/02,RAP_45,2026/07/25,1,1,2,RICE,L,0.3,1,
+2026/11/02,RAP_45,2026/07/25,1,1,2,RICE,L,2,1,
+2026/11/02,RAP_45,2026/07/25,1,1,2,PUTR2,L,0.3,1,
+2026/11/02,RAP_45,2026/07/25,1,2,2,RICE,L,0.3,2,
+2026/11/02,RAP_45,2026/07/25,1,2,3,RICE,L,0.15,1,
+2026/11/02,RAP_45,2026/07/25,1,2,3,RICE,L,0.3,2,

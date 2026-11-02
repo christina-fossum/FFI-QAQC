@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Date: 9/01/2026
-Edited by: Christina Fossum
+Date: 11/2/2026
+Edited by: Aline Johnson
 
 *code for 2026 RAPASS pre-burn protocols
 
@@ -104,7 +104,7 @@ load_data <- function(directory_path, pattern) {
 
 # Set "directory_path" to source file location
 
-directory_path <- "FFI data - WORKING/EagleCliff_QAQC/"
+directory_path <- "WORKING/Eagle Cliff/"
 
 
 # load data (Surface Fuels - Fine)
@@ -1083,7 +1083,7 @@ errors_ALL <- rbind(errors_FuelsFine, errors_Fuels1000, errors_FuelsDL, errors_T
 errors_ALL <- unique(errors_ALL)
 
 #change name of excel file: 
-write_xlsx(errors_ALL,"Error Logs/FALL_25_RX_00PRE.xlsx")
+write_xlsx(errors_ALL,"Error Logs/2026_EagleCliff.xlsx")
 
 
 ```

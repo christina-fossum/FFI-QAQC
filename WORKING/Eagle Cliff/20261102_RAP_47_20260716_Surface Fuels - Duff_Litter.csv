@@ -1,0 +1,24 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Num. Transects,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/11/02,RAP_47,2026/07/16,True,2,"CAF, AGJ, ARL",ARL,,,,,NPS\cfossum,8/20/2026 3:24:03 PM,NPS\alightcap,10/15/2026 9:39:19 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Transect,Samp. Loc.,Litter Depth,Duff Depth,DLFuConSt,Off Set,Comment,Fuelbed Depth
+2026/11/02,RAP_47,2026/07/16,1,1,0.1,0,Default,Yes,1 ft left,
+2026/11/02,RAP_47,2026/07/16,1,3,0.2,0.1,Default,No,,
+2026/11/02,RAP_47,2026/07/16,1,5,1,0.3,Default,No,,
+2026/11/02,RAP_47,2026/07/16,1,7,0.8,0.2,Default,No,,
+2026/11/02,RAP_47,2026/07/16,1,9,0,0,Default,No,,
+2026/11/02,RAP_47,2026/07/16,1,11,0.5,0.2,Default,No,,
+2026/11/02,RAP_47,2026/07/16,1,13,0.1,0,Default,No,,
+2026/11/02,RAP_47,2026/07/16,1,15,0.1,0,Default,No,,
+2026/11/02,RAP_47,2026/07/16,1,17,0.2,0,Default,No,,
+2026/11/02,RAP_47,2026/07/16,1,19,0.5,0.1,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,1,0.3,0.1,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,3,0,0,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,5,1,0,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,7,0.3,0.1,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,9,0,0,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,11,0.1,0,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,13,0.2,0,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,15,0.1,0.1,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,17,1.1,0.7,Default,No,,
+2026/11/02,RAP_47,2026/07/16,2,19,1,0.2,Default,No,,

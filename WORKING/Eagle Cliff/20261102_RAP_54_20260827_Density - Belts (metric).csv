@@ -1,0 +1,10 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Num. Transects,Num. Subbelts,Tran. Length,Tran. Width,Tran. Area,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/11/02,RAP_54,2026/08/27,True,2,4,20,2,40,"AGJ, ARL",AGJ,Height Class,,,,NPS\agjohnson,10/28/2026 9:04:23 PM,NPS\agjohnson,10/28/2026 10:17:54 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Transect,Subbelt,Item Code,Status,UV1,Count,Comment
+2026/11/02,RAP_54,2026/08/27,1,1,4,CHVIL4,L,0.6,2,
+2026/11/02,RAP_54,2026/08/27,1,1,4,ARTRV,L,0.3,2,
+2026/11/02,RAP_54,2026/08/27,1,1,4,RIMO2,L,0.15,1,
+2026/11/02,RAP_54,2026/08/27,1,1,4,RIMO2,L,0.3,1,
+2026/11/02,RAP_54,2026/08/27,1,2,1,RICE,L,0.15,1,
+2026/11/02,RAP_54,2026/08/27,1,2,3,RICE,L,0.15,2,

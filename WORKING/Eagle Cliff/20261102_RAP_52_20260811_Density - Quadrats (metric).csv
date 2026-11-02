@@ -1,0 +1,7 @@
+Report Date,MacroPlot Name,Sample Event Date,Visited,Num. Transects,Num. Quad./Tran.,Quad. Length,Quad. Width,Quad. Area,Collected By,Entered/Verif. By,UV1 Description,UV2 Description,UV3 Description,Comment,SampleData_CreatedBy,SampleData_CreatedDate,SampleData_ModifiedBy,SampleData_ModifiedDate
+2026/11/02,RAP_52,2026/08/11,True,1,4,10,10,78.5,"ARL, CAF",AGJ,,,,,NPS\cfossum,8/20/2026 3:11:20 PM,NPS\agjohnson,10/15/2026 9:56:21 PM
+
+Report Date,MacroPlot Name,Sample Event Date,Subplot Frac.,Transect,Quadrat,Item Code,Status,Height,Count,Comment
+2026/11/02,RAP_52,2026/08/11,1,1,4,ACGL,L,1,1,
+2026/11/02,RAP_52,2026/08/11,1,1,2,JUSC2,L,1,7,
+2026/11/02,RAP_52,2026/08/11,1,1,2,JUSC2,L,2,6,
